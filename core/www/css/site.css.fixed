@@ -1,0 +1,437 @@
+/*
+** author: Murray Shields
+*/
+/* Defaults! */
+
+body
+{
+	margin-top: 0px;
+	margin-left: 0px;
+	margin-right: 0px;
+	font-size: 0.8em;
+	background-color: #FFFFFF;
+}
+
+img
+{
+	border: 0px;
+}
+
+*
+{
+	font-family: sans-serif;
+	color: #404040;
+}
+
+h1, h2, h3, h4, h5, h6
+{
+	margin: 0.5em 0em 0.1em 0em;
+	color: #734619;
+	font-weight: bold;
+}
+
+h1
+{
+	color: #18027C;
+	margin: 0em;
+	padding-left: 3px;
+	padding-right: 3px;
+}
+
+h1 + p, h2 + p, h3 + p, h4 + p, h5 + p, h6 + p
+{
+	margin-top: 0em;
+}
+
+h1
+{
+	font-size: 1.3em;
+}
+h2
+{
+	font-size: 1.3em;
+}
+h3
+{
+	font-size: 1.2em;
+}
+h3.plain
+{
+	color: #FFFFFF;
+	background-color: #298CBE;
+}
+H4
+{
+	font-size: 1.1em;
+}
+H5
+{
+	font-size: 1.0em;
+}
+H6
+{
+	font-size: 0.9em;
+}
+
+
+/* unique page areas */
+
+#page_header
+{
+	top: 0px;
+	padding: 0px;
+	margin: 0px;
+	background-color: #FFFFFF;
+	border-bottom: 2px solid #298CBE;
+	height: 80px;
+}
+
+#page_header span
+{
+	margin: 2px;
+	float: right;
+	clear: both;
+	font-size: 0.8em;
+	color: #18027C;
+}
+
+#page_header span b
+{
+	color: #18027C;
+}
+
+#page_header h1
+{
+	margin: 2px;
+	float: right;
+	clear: both;
+	font-size: 1.3em;
+}
+
+#page_header h5
+{
+	margin: 2px;
+	padding: 1px;
+	padding-left: 3px;
+	padding-right: 3px;
+	float: right;
+	clear: both;
+	border: 1px solid #298CBE;
+	background-color: #EEEEEE;
+	font-size: 1.0em;
+	color: #298CBE;
+}
+
+#page_content
+{
+	clear: both;
+	position: relative;
+	left: 0px;
+	right: 0px;
+	margin: 0px 0px 0px 0px;
+	padding: 10px 20px 0px 20px;
+}
+
+#page_menu
+{
+	font-size: 1em;
+	font-weight: bold;
+	font-style: normal;
+}
+
+#outage
+{
+	margin-top: 10px;
+	font-size: 0.8em;
+	font-style: normal;
+	font-weight: bold;
+	color: #227199;
+}
+
+#outage_alert
+{
+	margin-top: 10px;
+	font-size: 1.1em;
+	font-weight: bold;
+	font-style: normal;
+	color: #CC0000;
+	border: 2px solid #CC0000;
+	background-color: #F8F5C2;
+}
+
+#page_footer
+{
+	padding: 0px 20px 0px 20px;
+	margin: 20px 0px 0px 0px;
+	border-top: 2px solid #227199;
+	font-size: 0.8em;
+	font-style: normal;
+}
+
+/* main menu */
+
+div#page_menu span
+{
+	margin: 0px;
+	padding: 0px 5px 5px 5px;
+	border-left: 1px solid #298CBE;
+	border-right: 1px solid #298CBE;
+	background-color: #DDDDDD;
+	font-size: 0.9em;
+	color: #BFBFBF;
+}
+
+div#page_menu span a
+{
+	text-decoration: none;
+	color: #227199;
+}
+
+div#page_menu span a:hover
+{
+	color: #298CBE;
+}
+
+div#page_menu span.selected
+{
+	background-color: #FFFFFF;
+}
+
+div#page_menu span.path
+{
+	background-color: #298CBE;
+}
+
+div#page_menu span.path a
+{
+	color: #FFFFFF;
+}
+
+div#page_menu span.path a:hover
+{
+	color: #DDDDDD;
+}
+
+/* links */
+
+a:link, a:visited 
+{
+	color: #FF0000;
+}
+
+a.OK:link, a.OK:visited
+{
+	font-weight: bold;
+	color: #00C800;
+}
+
+a:hover 
+{
+	color: #FF0000;
+}
+
+/* Tables */
+
+table
+{
+/*	border: 2px solid #734619;*/
+	border: none;
+	margin: 0px 0px 0px 0px;
+	border-collapse: collapse;
+}
+
+/* Rod added for plain text aSIC */
+.plaintable
+{
+	width: 100%;
+}
+
+table.outer th
+{
+	font-size: 0.95em;
+}
+
+table.outer td
+{
+	font-size: 0.85em;
+}
+
+table.nested th
+{
+	font-size: 1em;
+}
+
+table.nested td
+{
+	font-size: 1em;
+}
+
+table th
+{
+	padding: 4px;
+	vertical-align: top;
+	text-align: left;
+	font-weight: bold;
+	border: 1px solid #FFFFFF;
+	background-color: #DCD1C5;
+/*	font-size: 0.8em;  TO BE FIXED */
+}
+
+table td
+{
+	padding: 4px;
+	margin: 0px;
+	vertical-align: top;
+	border: 1px solid #FFFFFF;
+	border-collapse: collapse;
+	background-color: #E3E2F6;
+/*	font-size: 0.7em;  TO BE FIXED */
+}
+
+/* Rod added for plain text aSIC */
+.plain, .plainv
+{
+	padding: 4px;
+	vertical-align: top;
+	text-align: left;
+	border: 0px;
+	background-color: #FFFFFF;
+	color: #000000;
+/*	font-family: courier; */
+}
+
+/* Make all vertical plain tables line up for the second column */
+th.plainv
+{
+	width:	20%;
+}
+
+/* Rod added for plain text aSIC */
+.docnum
+{
+/*	font-family: courier;  */
+	text-align: right;
+	background-color: #FFFFFF;
+}
+
+.row0
+{
+	background-color: #EEEEEE;
+}
+
+.row1
+{
+	background-color: #FFFFFF;
+}
+
+.row0m
+{
+	background-color: #EEEEEE;
+}
+
+.row1m
+{
+	background-color: #FFFFFF;
+}
+
+table tr.row0m:hover,
+table tr.row1m:hover,
+table tr.row0m:hover td,
+table tr.row1m:hover td
+{
+	background-color: #DDEEFF;
+}
+
+
+.layout
+{
+	background-color: #FFFFFF;
+	color: #404040;
+	vertical-align: bottom;
+}
+
+.columns
+{
+	background-color: #FFFFFF;
+	color: #404040;
+	vertical-align: top;
+}
+
+/* Forms */
+
+form
+{
+	margin: 0px;
+}
+
+input, select, textarea
+{
+	color: #404040;
+	border: 1px solid #18027C;
+}
+
+/*
+input, select
+{
+	background-image: url(../img/fade.png);
+	background-repeat: repeat-x;
+	background-position: 50px 0px;
+}
+*/
+
+input[type|="submit"], input[type|="button"]
+{
+	color: #404040;
+	border: 2px solid #18027C;
+	font-weight: bold;
+}
+
+fieldset
+{
+	margin-top: 2em;
+	background-color: #FFFFFF;
+	border: 1px solid #18027C;
+}
+
+legend
+{
+	border-top: 1px solid #18027C;
+	border-left: 1px solid #18027C;
+	border-right: 1px solid #18027C;
+	font-weight: bold;
+	padding-left: 1em;
+	padding-right: 1em;
+	font-size: 1.2em;
+	color: #18027C;
+}
+
+/* additional colourisations */
+
+.link_highlight
+{
+	background-color: #DCD1C5;
+}
+
+.link_highlight a:link, .link_highlight A:visited 
+{
+	color: #000000;
+}
+
+.alert, .alert ul li, .alert *
+{
+	color: #CC0000;
+}
+
+div .alert
+{
+	border: 2px solid #CC0000;
+	background-color: #F8F5C2;
+	padding: 5px;
+}
+
+.toprint
+{
+	display: none;
+}
+
+/* end of file */

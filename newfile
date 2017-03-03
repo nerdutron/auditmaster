@@ -1,0 +1,23 @@
+#!/bin/bash
+#
+# Create a new source code file
+#
+# Usage: newfile filename
+#
+
+if [ $# != 1 ]
+then
+	echo "Usage: newfile filename"
+	exit
+fi
+
+NEW_FILE=$1
+
+echo "<?php" > $NEW_FILE
+
+cat ../../header.txt >> $NEW_FILE
+
+echo "?>" >> $NEW_FILE
+
+svn add $NEW_FILE
+svn propset svn:keywords "Id" $NEW_FILE

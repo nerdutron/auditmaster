@@ -1,0 +1,180 @@
+/*
+** Style Sheets for olbible.com
+**
+** Author: Murray Shields
+**
+*/
+
+/* Defaults! */
+
+*
+{
+    color: #000000;
+   font-family: Arial, "Times New Roman", serif;
+    font-size: 8pt;
+}
+
+H1, H2, H3, H4, H5, H6
+{
+	color: #000000;
+    font-size: 10pt;
+}
+
+#page_header
+{
+	border-bottom: 2px solid #000000;
+	height: 25px;
+}
+
+
+#page_header SPAN TABLE
+{
+	display: none;
+}
+
+#page_menu
+{
+	display: none;
+}
+
+#page_footer
+{
+	border-top: 2px solid #000000;
+}
+
+A
+{
+	text-decoration: none;
+}
+
+A:link, A:visited 
+{
+	color: #000000;
+}
+
+A.OK:link, A.OK:visited
+{
+	color: #000000;
+}
+
+A:hover 
+{
+	color: #000000;
+}
+
+TABLE
+{
+	border: none;
+}
+
+TABLE TH
+{
+	border: none;
+	background-color: #BBBBBB;
+}
+
+TABLE TD
+{
+	border: none;
+	background-color: #FFFFFF;
+}
+
+.row0
+{
+	background-color: #EEEEEE;
+}
+
+.row1
+{
+	background-color: #FFFFFF;
+}
+
+.row0m
+{
+	background-color: #EEEEEE;
+}
+
+.row1m
+{
+	background-color: #FFFFFF;
+}
+
+.layout
+{
+	color: #FFFFFF;
+}
+
+.columns
+{
+	color: #FFFFFF;
+}
+
+INPUT, SELECT, TEXTAREA
+{
+	color: #000000;
+	border: 1px solid #000000;
+}
+
+INPUT, SELECT
+{
+	background-image: none;
+}
+
+INPUT[type|="submit"], INPUT[type|="button"]
+{
+	color: #000000;
+	border: 2px solid #000000;
+}
+
+.link_highlight
+{
+	display: none;
+}
+
+.alert, .alert UL LI
+{
+	color: #000000;
+}
+
+DIV .alert
+{
+	border: 2px solid #000000;
+	background-color: #FFFFFF;
+}
+
+.toprint
+{
+	display: block;
+}
+
+.noprint
+{
+	display: none;
+}
+
+#b2bay TABLE TH
+{
+	border: none;
+	background-color: #BBBBBB;
+}
+
+#b2bay TABLE TD
+{
+	border: none;
+	background-color: #FFFFFF;
+}
+
+#b2bay .row0
+{
+	background-color: #EEEEEE;
+	font-size: 8pt;
+}
+
+#b2bay .row1
+{
+	background-color: #FFFFFF;
+	font-size: 8pt;
+}
+
+
+/* end of file */

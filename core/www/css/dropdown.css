@@ -1,0 +1,105 @@
+/* common styling */
+.menu
+{
+	font-family:  sans-serif;
+/*	width: 750px; */
+	position: relative;
+	margin: 0;
+	font-size: 0.9em;
+	margin: 0px 0px 0px 0px;
+	z-index: 100;
+}
+
+.menu ul li a, .menu ul li a:visited
+{
+	display: block;
+	text-decoration: none;
+	color: #000000;
+	width: 124px;
+	height: 20px;
+	text-align: center;
+	color: #FFFFFF;
+	border: 1px solid #FFFFFF;
+	background: #298CBE;
+	line-height: 20px;
+	font-size: 11px;
+	overflow: hidden;
+}
+
+.menu ul
+{
+	padding: 0;
+	margin: 0;
+	list-style-type:  none; 
+}
+
+.menu ul li
+{
+	float: left;
+	margin-right: 1px;
+	position: relative;
+}
+
+.menu ul li ul
+{
+	display:  none;
+}
+
+/* specific to non IE browsers */
+.menu ul li:hover a
+{
+	color: #DDDDDD;
+	background: #18027C;
+}
+
+.menu ul li:hover ul
+{
+	display: block;
+	position: absolute;
+	top: 21px;
+	left: 0;
+	width: 125px;
+}
+
+.menu ul li:hover ul li a.hide
+{
+	background: #DDDDDD;
+	color: #298CBE;
+}
+
+.menu ul li:hover ul li:hover a.hide
+{
+	background: #18027C;
+	color: #DDDDDD;
+}
+
+.menu ul li:hover ul li ul
+{
+	display:  none;
+}
+
+.menu ul li:hover ul li a
+{
+	display: block;
+	background: #DDDDDD;
+	color: #298CBE;
+}
+
+.menu ul li:hover ul li a:hover
+{
+	background: #298CBE;
+	color: #DDDDDD;
+}
+
+.menu ul li:hover ul li:hover ul
+{
+	display: block;
+	position: absolute;
+	left: 125px;
+	top: 0;
+}
+
+.menu ul li:hover ul li:hover ul.left
+{
+	left: -125px;
+}

@@ -1,0 +1,85 @@
+<?xml version ='1.0' encoding ='UTF-8' ?>
+<definitions name='Process'
+  targetNamespace='http://soapdemo.mu.com.au:82/service_process'
+  xmlns:tns=' http://soapdemo.mu.com.au:82/service_process '
+  xmlns:soap='http://schemas.xmlsoap.org/wsdl/soap/'
+  xmlns:xsd='http://www.w3.org/2001/XMLSchema'
+  xmlns:soapenc='http://schemas.xmlsoap.org/soap/encoding/'
+  xmlns:wsdl='http://schemas.xmlsoap.org/wsdl/'
+  xmlns='http://schemas.xmlsoap.org/wsdl/'>
+
+<xsd:element name="ProcessesArray">
+    <xsd:complexType>
+        <xsd:complexContent>
+            <xsd:restriction base="SOAP-ENC:Array">
+                <xsd:sequence>
+                    <xsd:element
+                        maxOccurs="unbounded"
+                        minOccurs="0"
+                        name="Processes"
+                        type="xsd:string"/>
+                </xsd:sequence>
+                <xsd:attribute ref="SOAP-ENC:arrayType" wsdl:arrayType="xsd:string[]"/>
+            </xsd:restriction>
+        </xsd:complexContent>
+    </xsd:complexType>
+</xsd:element>
+
+<message name='TransferredProcessRequest'>
+  <part name='process_id' type='xsd:string'/>
+</message>
+<message name='TransferredProcessResponse'>
+  <part name='confirmation' type='xsd:string'/>
+</message>
+
+<message name='SupplyProcessesRequest'>
+  <part name='hostname' type='xsd:string'/>
+</message>
+<message name='SupplyProcessesResponse'>
+  <part name='processes' type='xsd:ProcessesArray'/>
+</message>
+
+<portType name='ProcessPortType'>
+  <operation name='TransferredProcess'>
+    <input message='tns:TransferredProcessRequest'/>
+    <output message='tns:TransferredProcessResponse'/>
+  </operation>
+  <operation name='SupplyProcesses'>
+    <input message='tns:SupplyProcessesRequest'/>
+    <output message='tns:SupplyProcessesResponse'/>
+  </operation>
+</portType>
+
+<binding name='ProcessBinding' type='tns:ProcessPortType'>
+  <soap:binding style='rpc'
+    transport='http://schemas.xmlsoap.org/soap/http'/>
+  <operation name='TransferredProcess'>
+    <soap:operation soapAction='urn:xmethods-process-database#TransferredProcess'/>
+    <input>
+      <soap:body use='encoded' namespace='urn:xmethods-process-database'
+        encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'/>
+    </input>
+    <output>
+      <soap:body use='encoded' namespace='urn:xmethods-process-database'
+        encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'/>
+    </output>
+  </operation>
+  <operation name='SupplyProcesses'>
+    <soap:operation soapAction='urn:xmethods-process-database#SupplyProcesses'/>
+    <input>
+      <soap:body use='encoded' namespace='urn:xmethods-process-database'
+        encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'/>
+    </input>
+    <output>
+      <soap:body use='encoded' namespace='urn:xmethods-process-database'
+        encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'/>
+    </output>
+  </operation>
+</binding>
+
+<service name='SoapProcess'>
+  <port name='ProcessPort' binding='ProcessBinding'>
+    <soap:address location='http://soapdemo.mu.com.au:82/phplib/soap/process.inc'/>
+  </port>
+</service>
+</definitions>

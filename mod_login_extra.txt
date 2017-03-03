@@ -1,0 +1,5 @@
+<script type="text/javascript" src="http://prelive.flyingfoxstudios.com.au/modules/mod_rokvirtuemart_categories/js/rokvm_categories.js"></script> 
+  <script type="text/javascript">window.templatePath = 'http://prelive.flyingfoxstudios.com.au/';</script> 
+  <script type="text/javascript" src="http://prelive.flyingfoxstudios.com.au/components/com_virtuemart/themes/vm_mynxx/theme.js"></script> 
+  <script type="text/javascript" src="http://prelive.flyingfoxstudios.com.au/components/com_virtuemart/js/sleight.js"></script> 
+  <link type="text/css" href="http://prelive.flyingfoxstudios.com.au/components/com_virtuemart/themes/vm_mynxx/theme.css" rel="stylesheet" />

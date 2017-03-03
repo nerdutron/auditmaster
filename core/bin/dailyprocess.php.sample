@@ -1,0 +1,16 @@
+<?php
+//////////////////////////////////////////////////////////////////////////////
+//                                                                          //
+//                                                                          //
+//////////////////////////////////////////////////////////////////////////////
+
+require_once("definitions.inc");
+
+$Now = date("Y-m-d H:i:s");
+
+$Query = "DELETE FROM user_session WHERE session_expires < '".$Now."'";
+DB_DoQuery(ACC_DB, $Query);
+$Query = "DELETE FROM report_cache WHERE expiry < '".$Now."'";
+DB_DoQuery(CW_DB, $Query);
+
+?>

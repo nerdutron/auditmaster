@@ -1,0 +1,467 @@
+<?php
+//////////////////////////////////////////////////////////////////////////////
+//                                                                          //
+// $Id:: site.inc 76 2007-08-03 06:43:57Z rod                             $ //
+//                                                                          //
+//  Sanctuary Faith Community Management Software                           //
+//  Copyright (C) Authors listed in AUTHORS.txt                             //
+//                                                                          //
+//  This program is free software; you can redistribute it and/or modify    //
+//  it under the terms of the GNU General Public License as published by    //
+//  the Free Software Foundation; either version 2 of the License, or       //
+//  (at your option) any later version.                                     //
+//                                                                          //
+//  This program is distributed in the hope that it will be useful,         //
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//  GNU General Public License for more details.                            //
+//                                                                          //
+//  You should have received a copy of the GNU General Public License       //
+//  along with this program; if not, write to the Free Software             //
+//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.               //
+//                                                                          //
+//////////////////////////////////////////////////////////////////////////////
+
+require_once(ToObjects("core")."security.inc");
+require_once(ToIncludes("core")."cw_table.inc");
+require_once(PHPLIB_DIR."field.inc");
+require_once(PHPLIB_DIR."mailq.inc");
+//require_once(PHPLIB_DIR."webstats.inc");
+require_once(PHPLIB_DIR."stopwatch.inc");
+require_once(PHPLIB_DIR."box.inc");
+
+class site extends security
+{
+	function __construct()
+	{
+//		$this->Stats = new webstats(CW_DB, array("logo","cgrs|chart_meter","cgrs|chart_30_day_credit"));
+		$this->S = new Stopwatch;
+
+		if (BrowserCheck("msie"))
+			define("ICON", "gif");
+		else
+			define("ICON", "png");
+
+//		main::buffer_on("cache");
+		parent::__construct();
+		if (trim($this->Title == ""))
+			$this->Title = "CreditWorks Australia Pty Ltd";
+		$this->Action = CURRENT_ACTION;
+
+		$this->MenuPath = array();
+		$this->MenuLocation("Home", "welcome");
+
+		$this->MainMenu = array();
+		$this->MainMenu["Welcome"] = "welcome";
+		$this->MainMenu["About"] = "about";
+		$this->MainMenu["Contact"] = "contact";
+		$this->MainMenu["Login"] = "secure";
+
+		$this->PrintStyle = "css/site_print.css";
+	}
+
+	function Icon($Type, $Size = 16)
+	{
+		if (!in_array($Size, array(16, 22, 32)))
+			$Size = 16;
+//		return("src=\"icon/".ICON."/left_".$Size.".".ICON."\"");
+		return("src=\"icon/".ICON."/".$Type."_".$Size.".".ICON."\"");
+	}
+
+	function MenuLocation($Name, $Object)
+	{
+		$this->MenuPath[$Name] = $Object;
+	}
+
+	function Start()
+	{
+		$this->PageSetup();
+		$this->PageBody();
+		$this->PageEnd();
+	}
+
+	function PageBody()
+	{
+		$this->PageHeader();
+
+		$this->PageMenuStart();
+		$this->PageMenu();
+		$this->PageMenuEnd();
+
+		$this->PageSubTitle();
+
+		$this->PageContentStart();
+		$this->PageContent();
+		$this->PageContentEnd();
+
+		$this->PageFooterStart();
+		$this->PageFooter();
+		$this->PageFooterEnd();
+
+
+		if (defined("MODULES_NAME"))
+			$Action = MODULES_NAME.CURRENT_ACTION;
+		else
+			$Action = CURRENT_ACTION;
+//		$this->Stats->record($Action);
+	}
+
+	function Head()
+	{
+	}
+
+	function Body()
+	{
+	}
+
+	function SetPrintStyle($Style = "")
+	{
+		$this->PrintStyle = $Style;
+	}
+
+	function PageSetup()
+	{
+		echo "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml2/DTD/xhtml1-strict.dtd\">\n";
+		echo "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\">\n";
+		echo "<head>\n";
+		echo "<title>".$this->Title."</title>\n";
+		echo "<link rel='stylesheet' type='text/css' href='css/site.css' />\n";
+		if ($this->ValidUser() && $this->PrintStyle)
+			echo "<link rel='stylesheet' type='text/css' href='".$this->PrintStyle."' media=\"print\" />\n";
+
+		$LogoID = 0;
+		$Background = "";
+		$Foreground = "";
+		if ($this->ValidUser())
+		{
+			$LogoID = $this->User->GetLogoID();
+			$Background = $this->User->GetBackground();
+			$Foreground = $this->User->GetForeground();
+		}
+		if (trim($Background.$Foreground))
+		{
+			echo "<style> ";
+			if (trim($Background))
+				echo " #page_header { background-color: ".$Background."; } ";
+			if (trim($Foreground))
+				echo " #page_header SPAN, #page_header SPAN B, #page_header H1 { color: ".$Foreground."; } ";
+			echo "</style>";
+		}
+
+		if (defined("EXPERIMENTAL") && $this->ValidUser())
+		{
+			echo "<link rel=\"stylesheet\" media=\"all\" type=\"text/css\" href=\"css/dropdown.css\" />\n";
+			echo "<!--[if lte IE 6]>\n";
+			echo "<link rel=\"stylesheet\" media=\"all\" type=\"text/css\" href=\"css/dropdown_ie.css\" />\n";
+			echo "<![endif]-->\n";
+		}
+
+		echo "<script type=\"text/javascript\" src=\"jx/ajax.js\"><!-- Ajax Handlers --></script>\n";
+		OpenJSBox("Notes", 800, 275); // Popup
+		OpenJSBox("PopBox", 600, 500); // Popup
+		$this->Head();
+		echo "</head>\n";
+		echo "<body id=\"page_body\"".$this->Body().">\n";
+	}
+
+	function PageEnd()
+	{
+		echo "</body>\n";
+		echo "</html>\n";
+	}
+
+	function PageContentStart()
+	{
+		echo "<div id='page_content'>\n";
+	}
+
+	function PageContentEnd()
+	{
+		echo "</div>";
+	}
+
+	function PageMenuStart()
+	{
+		echo "<div id='page_menu'>\n";
+	}
+
+	function PageMenu()
+	{
+		foreach($this->MenuPath as $Item => $Action)
+		{
+			echo "<span class=\"path\">";
+			echo "<a href=\"".$this->URL($Action)."\">";
+			echo ucfirst($Item)."</a>";
+			echo " &gt;&gt;</span>";
+		}
+		foreach($this->MainMenu as $Item => $Action)
+		{
+			echo "<span";
+			if (is_a($this, $Action))
+				echo " class=\"selected\"";
+			echo ">";
+			echo "<a href=\"".$this->URL($Action)."\">";
+			echo ucfirst($Item)."</a>";
+			echo "</span>";
+		}
+
+		$this->MenuExtra();
+	}
+
+	function OutageNotice()
+	{
+		$Query  = "";
+		$Query .= "SELECT * ";
+		$Query .= "FROM scheduled_outages ";
+		$Query .= "WHERE status = 'ACTIVE' ";
+		$Query .= "ORDER BY scheduled LIMIT 1 ";
+		$Data = DBRow(ACC_DB, $Query);
+		if (is_array($Data))
+		{
+			$Scheduled = CreateTimeStamp($Data["scheduled"]);
+			$Now = mktime();
+			$Difference = $Scheduled - $Now;
+			if ($Difference < 0)
+			{
+				echo "<div id=\"outage_alert\">";
+				echo "CreditWorks is currently unavailable due to ".$Data["description"];
+				echo "</div>";
+			}
+			else
+			{
+				$Hour = date("H", $Scheduled);
+				$When = " on ".date("l jS F", $Scheduled)." at ".date("h:ia", $Scheduled);
+				if (date("Y-m-d", $Scheduled) == date("Y-m-d", strtotime("tomorrow")))
+				{
+					if ($Hour < 12)
+						$When = " Tomorrow Morning ";
+					elseif ($Hour > 18)
+						$When = " Tomorrow Evening ";
+					else
+						$When = " Tomorrow Afternoon ";
+					$When .= " at ".date("h:ia", $Scheduled);
+				}
+				if (date("Y-m-d", $Scheduled) == date("Y-m-d"))
+				{
+					if ($Hour < 12)
+						$When = " This Morning ";
+					elseif ($Hour > 18)
+						$When = " This Evening ";
+					else
+						$When = " This Afternoon ";
+					$When .= " at ".date("h:ia", $Scheduled);
+				}
+				for ($i=4;$i>=2;$i--)
+				{
+					if ($Difference <= 60 * 60 * $i)
+					{
+						$When = " in less than ".$i." hours at ".date("h:ia", $Scheduled);
+					}
+				}
+				if ($Difference <= 60 * 60)
+				{
+					$Parts = explode(":", date("h:i:s", $Difference));
+					$When = " in ".($Parts[1] * 1)." minutes and ".($Parts[2] * 1)." seconds";
+				}
+				$Message  = "";
+				$Message .= "CreditWorks will be unavailable due to ";
+				$Message .= $Data["description"];
+				$Message .= $When;
+
+				$Parts = explode(":", $Data["duration"]);
+				$Hours = $Parts[0] * 1;
+				switch($Hours)
+				{
+					case 0:
+						$Message .= ".";
+						break;
+					case 1:
+						$Message .= " for 1 hour.";
+						break;
+					default:
+						$Message .= " for ".$Hours." hours.";
+						break;
+				}
+
+				if ($Difference < (60 * 60 * 4)) // 4 hours or less
+				{
+					// show everywhere (including FOS) with highlight
+					echo "<div id=\"outage_alert\">";
+					echo $Message;
+					echo "</div>";
+				}
+				elseif ($Difference < (60 * 60 * 8)) // 8 hours or less
+				{
+					// show everywhere (including FOS)
+					echo "<div id=\"outage\">";
+					echo $Message;
+					echo "</div>";
+				}
+				elseif ($Difference < (60 * 60 * 24)) // 24 hours or less
+				{
+					// show on primary only
+					if (!defined("MODULES_DIR"))
+					{
+						echo "<div id=\"outage\">";
+						echo $Message;
+						echo "</div>";
+					}
+				}
+				else
+				{
+					// show on entry only
+					if (CURRENT_ACTION == "secure")
+					{
+						echo "<div id=\"outage\">";
+						echo $Message;
+						echo "</div>";
+					}
+				}
+			}
+		}
+	}
+
+	function PageMenuEnd()
+	{
+		echo "</div>";
+		//$this->OutageNotice();
+	}
+
+	function PageHeader()
+	{
+//		if ($this->ValidUser())
+//			$ReportTitle = $this->User->ReportTitle();
+
+		echo "<div id='page_header'>\n";
+		if ($this->ValidUser())
+		{
+			echo "<span class=\"noprint\">";
+			echo "<b>User Name:</b>";
+			echo "&nbsp;";
+			echo $this->User->Name();
+
+			if ($this->NeedsAdmin(4))
+				$Account .= " [<a href=\"Javascript:PopBox('".$this->URL("account_switch")."')\">?</a>]";
+			echo $Account;
+			echo "</span>";
+
+		// Quick and dirty addition of a logout button to the header
+
+			$this->PageTitle($ReportTitle);
+			echo "<h5 class=\"noprint\">".$this->ActionLink($this->URL("secure_logout"), "Are you sure you wish to logout?", "Logout")."</h5>";
+		}
+
+		$Extra = " class=\"noprint\"";
+		$LogoID = 0;
+		if ($this->ValidUser())
+			$LogoID = $this->User->GetLogoID();
+		if ($LogoID)
+			echo "<img src=\"".$this->URL("logo", array("LogoID"=>$LogoID))."\"".$Extra." />";
+		else
+			echo "<img src=\"".DEFAULT_LOGO."\"".$Extra." />";
+		echo "</div>";
+	}
+
+	function PageTitle($Alternate = "")
+	{
+		if (substr($this->Title, 0, 5) == "[Sanctuary]")
+			$Title = substr($this->Title, 6);
+		else
+			$Title = $this->Title;
+
+		if ($Alternate)
+			$Title = $Alternate;
+
+		echo "<h1 class=\"toprint\" style=\"float: left; text-align: left;\">".$Title."</h1>";
+		echo "<h1 class=\"noprint\">".$Title."</h1>";
+	}
+	
+	function PageSubTitle()
+	{
+		if ($this->SubTitle)
+			echo "<h2 style=\"clear: both;\">".$this->SubTitle."</h2></div>";
+	}
+
+	function PageContent()
+	{
+	}
+
+	function PageFooterStart()
+	{
+		echo "<div id='page_footer'>\n";
+	}
+
+	function PageFooter()
+	{
+		echo "<span style=\"float: left\">Page Generated ".date("d/m/Y h:ia")." in ".$this->S->GetStop()."</span>";
+//		echo "<span style=\"float: right\">Release [".REL."] - Sanctuary ".date("Y")." - Faith Community Management Software</span>";
+
+		if ($this->ValidUser() && REL == "dev")
+		{
+			if ($this->User->Get("account_id") == 1)
+			{
+				echo "<div style=\"float: right;\">";
+				echo "[<a href=\"objects.php\">Objects</a>]";
+				echo "&nbsp;";
+				echo "[<a href=\"palette.php\">Palette</a>]";
+				echo "&nbsp;";
+				echo "</div>";
+			}
+		}
+	}
+
+	function PageFooterEnd()
+	{
+		echo "</div>";
+	}
+
+	function URL($Action, $Extra = "")
+	{
+		return (main::url($Action, $Extra, "", 1, 1)); // persistent is next
+	}
+
+	function Redir($URL)
+	{
+		main::redirect($URL);
+	}
+
+	function ActionLink($URL, $Question, $Label = "")
+	{
+		if ($Label == "")
+			$Label = "<img ".$this->Icon("no")." />";
+		$Link  = "";
+		$Link .= "<a href=\"";
+		$Link .= $URL;
+		$Link .= "\" onclick=\"return confirm('";
+		$Link .= $Question;
+		$Link .= "')\">";
+		$Link .= $Label;
+		$Link .= "</a>";
+		return ($Link);
+	}
+
+	function ReturnToParent()
+	{
+		echo "<script>\n";
+		echo "window.opener.document.location.reload();\n";
+		echo "window.close();\n";
+		echo "</script>\n";
+		exit;
+	}
+
+	function ShowMessage($Message)
+	{
+		if ($Message)
+		{
+			echo "<div class=\"alert\">";
+			echo $Message;
+			echo "</div>";
+		}
+	}
+
+	function MenuExtra()
+	{
+	}
+}
+
+?>
