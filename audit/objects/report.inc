@@ -45,6 +45,8 @@ class report extends secure
 			$this->Params = array("auditor_id" => "0", "start_date" => date("01/m/Y"));
 		}
 
+		$this->Processor = new audit_report($this->Report);
+
 		if ($this->Run)
 		{
 			$RunParams = $this->Params;
@@ -55,15 +57,16 @@ class report extends secure
 					unset($RunParams[$Key]);
 			}
 
-			$this->Processor = new audit_report($this->Report);
 			$this->Data = $this->Processor->Run($RunParams);
 		}
 
+/*
 		if ($this->Download)
 		{
 			$this->AuditReportCSV();
 			exit();
 		}
+*/
 	}
 
 	function Head()
@@ -283,6 +286,7 @@ class report extends secure
 		// Special option for power user
 		if ($this->NeedsAdmin(2))
 		{
+			$T->AddHead("Stage");
 			$T->AddHead("Completed Date Range", 2);
 		}
 
@@ -302,6 +306,7 @@ class report extends secure
 		// Special option for power user
 		if ($this->NeedsAdmin(2))
 		{
+			$T->AddData(field::GetDrop("Params[stage]", $this->Params["stage"], $this->Processor->GetStages(), "onChange='submit();'"));
 			$T->AddData(field::GetText("Params[start_completed_date]", $this->Params["start_completed_date"], 12, 12, "id='from_completed_date' onChange='submit();'"));
 			$T->AddData(field::GetText("Params[end_completed_date]", $this->Params["end_completed_date"], 12, 12, "id='to_completed_date' onChange='submit();'"));
 		}

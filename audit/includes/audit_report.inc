@@ -76,6 +76,24 @@ class audit_report
 			$Query .= " AND date_completed < '".$Params["end_completed_date"]."'";
 		}
 
+		if ($Params["stage"])
+		{
+			$Stages = DBResult(DB, "SELECT stage_id FROM stages WHERE description = '".$Params["stage"]."'");
+
+			$Query .= " AND stage_id IN (";
+
+			foreach ($Stages as $Index =>  $ID)
+			{
+				if ($Index > 0)
+					$Query .= ",";
+				$Query .= $ID["stage_id"];
+			}
+
+			$Query .= ")";
+
+			unset($Params["stage"]);
+		}
+
 		foreach ($Params as $Field => $Val)
 		{
 			if ($Val)
@@ -114,6 +132,18 @@ class audit_report
 		//echo $Query;
 
 		return DBResult(DB, $Query);
+	}
+
+	function GetStages()
+	{
+		$Stages = DBResult(DB, "SELECT description FROM stages");
+
+		$StageArray = array("" => "All");
+
+		foreach ($Stages as $Row)
+			$StageArray[$Row["description"]] = $Row["description"];
+
+		return $StageArray;
 	}
 }
 
