@@ -60,13 +60,16 @@ class report extends secure
 			$this->Data = $this->Processor->Run($RunParams);
 		}
 
-/*
-		if ($this->Download)
+
+		if ($this->NeedsAdmin(2))
 		{
-			$this->AuditReportCSV();
-			exit();
+			if ($this->Download)
+			{
+				$this->AuditReportCSV();
+				exit();
+			}
 		}
-*/
+
 	}
 
 	function Head()
