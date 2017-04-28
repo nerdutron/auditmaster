@@ -156,7 +156,8 @@ class DBQuery
 		$this->RowCount = -1;
 		$this->GetRecResult = $this->DoQuery($DBName, $Query);
 		$R = &$this->GetRecResult;
-		DBERR::DetectError($DBName, $R);
+		$ERR = new DBERR;
+		$ERR->DetectError($DBName, $R);
 		$this->DataInfo = $R->tableInfo();
 		unset($R);
 	}
