@@ -28,6 +28,7 @@ class audit
 		if ($this->AuditID)
 		{
 			$INQ->SaveWhere("audit_id", $this->AuditID);
+                        $INQ->Save("date_updated", date("Y-m-d H:i:s"));
 			$Action = "UPDATE";
 		}
 		else
@@ -35,6 +36,7 @@ class audit
 			$Action = "INSERT";
 			if (!$Data["audit_status"])
 				$Data["audit_status"] = "PENDING";
+                        $INQ->Save("date_created", date("Y-m-d H:i:s"));
 		}
 
 		if ($Data["operator_id"])
@@ -45,13 +47,14 @@ class audit
 			$INQ->Save("stage_id", $Data["stage_id"]);
 		if ($Data["scheme_id"])
 			$INQ->Save("scheme_id", $Data["scheme_id"]);
-//		$INQ->Save("cost", $Data["cost"]);
-//		$INQ->Save("paid", $Data["paid"]);
-//		$INQ->Save("net_cost", $Data["net_cost"]);
-		$INQ->Save("net_audit", $Data["net_audit"]);
-		$INQ->Save("net_travel", $Data["net_travel"]);
-		$INQ->Save("total_cost", $Data["total_cost"]);
+
 		$INQ->Save("date_due", $Data["date_due"]);
+//              $INQ->Save("cost", $Data["cost"]);
+//              $INQ->Save("paid", $Data["paid"]);
+//              $INQ->Save("net_cost", $Data["net_cost"]);
+                $INQ->Save("net_audit", $Data["net_audit"]);
+                $INQ->Save("net_travel", $Data["net_travel"]);
+                $INQ->Save("total_cost", $Data["total_cost"]);
 
 		$INQ->Save("date_completed", $Data["date_completed"]);
 		$INQ->Save("date_closed", $Data["date_closed"]);
