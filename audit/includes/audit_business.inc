@@ -40,7 +40,13 @@ class audit_business
 		}
 
 		if ($this->User->IsAuditor())
-			$UserID = $this->User->UserID();
+		{
+			// Check if this auditor did the last 2 audits
+			if ($this->Audit->WhoDidLastTwo($SchemeID) == $this->User->UserID())
+				$UserID = 0;
+			else
+				$UserID = $this->User->UserID();
+		}
 		else
 			$UserID = 0;
 

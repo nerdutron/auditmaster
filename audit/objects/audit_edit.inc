@@ -130,7 +130,13 @@ class audit_edit extends secure
 		$T->EndRow();
 
 		$T->AddHead("Auditor:");
-		$T->AddData(field::GetDrop("FormData[auditor_id]", $FormData["auditor_id"], audit::GetAuditorDrop(array("" => ""))));
+		if ($this->NeedsAdmin(2) || $this->Audit->Editable())
+			$T->AddData(field::GetDrop("FormData[auditor_id]", $FormData["auditor_id"], audit::GetAuditorDrop(array("" => ""))));
+		else
+		{
+			$AuditorArray = audit::GetAuditorDrop();
+			$T->AddData($AuditorArray[$FormData["auditor_id"]]);
+		}
 		$T->EndRow();
 		$T->AddHead("Stage:");
 		$T->AddData(field::GetDrop("FormData[stage_id]", $FormData["stage_id"], audit::GetStageDrop($FormData["scheme_id"])));

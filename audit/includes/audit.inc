@@ -16,6 +16,14 @@ class audit
 		$this->Data = DBRow(DB, "SELECT * FROM audits WHERE audit_id = ".$this->AuditID);
 	}
 
+	function Editable()
+	{
+		if ((strtotime($this->Data["date_created"]) + 3600) > time())
+			return true;
+		else
+			return false;
+	}
+
 	function GetDetails()
 	{
 		return $this->Data;
@@ -239,6 +247,19 @@ class audit
 		$INQ->Run(DB, "audits", "UPDATE");
 
 		$INQ->EndQuery();
+	}
+
+	function WhoDidLastTwo($SchemeID)
+	{
+		$Result = DBResult(DB, "SELECT * FROM audits WHERE operator_id = ".$this->OperatorID." AND scheme_id = $SchemeID ORDER BY date_due DESC LIMIT 2");
+
+		if (count($Result) < 2)
+			return false;
+
+		if ($Result[0]["auditor_id"] == $Result[1]["auditor_id"])
+			return $Result[0]["auditor_id"];
+
+		return false;
 	}
 }
 
