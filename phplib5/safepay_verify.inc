@@ -72,8 +72,6 @@ class safepay_verify
 			$Errors[] = "ERROR - Credit Card has Expired.";
 		elseif($CardY < date("y"))
 			$Errors[] = "ERROR - Credit Card has Expired.";
-		elseif($CardY > (date("y") + 10))
-			$Errors[] = "ERROR - Please provide a valid Expiry Date.";
 
 		return($Errors);
 	}

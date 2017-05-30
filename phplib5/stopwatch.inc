@@ -24,7 +24,10 @@ class StopWatch
 		$TimeString = "";
 		$Parts = explode(".", $Duration);
 		$Seconds = $Parts[0];
-		$MicroSeconds = $Parts[1];
+		if (sizeof($Parts) > 1)
+			$MicroSeconds = $Parts[1];
+		else
+			$MicroSeconds = 0;
 
 		$MicroSeconds = $MicroSeconds."000";
 		$Tenths = substr($MicroSeconds,0,1);

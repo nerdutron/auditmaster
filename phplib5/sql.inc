@@ -18,13 +18,26 @@ class sql
 
 	function text($String)
 	{
-	//	if (defined("DB_SERVER"))
-	//		$Link = mysql_connect(DB_SERVER, $GLOBALS["MY_USER"], $GLOBALS["MY_PASSWORD"]);
-	//	else
-	//		$Link = mysql_connect("localhost", $GLOBALS["MY_USER"], $GLOBALS["MY_PASSWORD"]);
-//		$Link = mysql_connect("localhost", "", "");
-//		return(mysql_real_escape_string($String));
-		return(addslashes($String));
+		if (defined("SQL_FUNC_LOGIN"))
+			$User = SQL_FUNC_LOGIN;
+		else
+			$User = "";
+		if (defined("SQL_FUNC_PASS"))
+			$Pass = SQL_FUNC_PASS;
+		else
+			$Pass = "";
+		if (defined("SQL_FUNC_HOST"))
+			$Host = SQL_FUNC_HOST;
+		else
+			$Host = "localhost";
+
+		if (trim($User))
+		{
+			$Link = mysql_connect($Host, $User, $Pass);
+			return(mysql_real_escape_string($String));
+		}
+		else
+			return(addslashes($String));
 	}
 
 	function text_array($Array)

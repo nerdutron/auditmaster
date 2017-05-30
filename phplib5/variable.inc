@@ -39,6 +39,13 @@ class variable
 		return($Data);
 	}
 
+	// COOKIE functions
+
+	function GetCookie($Name)
+	{
+		return($_COOKIE[$Name]);
+	}
+
 	// PUT values
 
 	function DoPutV($Keys, $Val)
@@ -67,8 +74,6 @@ class variable
 		$Val = $this->VAR_CACHE;
 		foreach ($this->GetInput(func_get_args()) as $Key)
 			$Val = $Val[$Key];
-//		if (!is_array($Val))
-//			$Val = urldecode($Val);
 		return ($Val);
 	}
 
@@ -88,8 +93,6 @@ class variable
 		}
 		else
 			$this->$Var = &$this->VAR_CACHE[$Var];
-//		if (!is_array($this->$Var))
-//			$this->$Var = urldecode($this->$Var);
 	}
 
 	function PlainMakeL()
@@ -115,8 +118,6 @@ class variable
 		}
 		else
 			$this->$Var = $this->VAR_CACHE[$Var];
-//		if (!is_array($this->$Var))
-//			$this->$Var = urldecode($this->$Var);
 	}
 
 	function PlainCopyL()
@@ -136,7 +137,6 @@ class variable
 		}
 		else
 			$Data = strip_tags($Data);
-//			$Data = strip_tags(urldecode($Data));
 		return($Data);
 	}
 

@@ -63,14 +63,11 @@
 
 class DivBox
 {
-	function GetBoxStart($Class = "", $ShadowClass = "", $ID = "")
+	function GetBoxStart($Class = "", $ShadowClass = "")
 	{
 		$S = "";
 
-		if ($ID)
-			$IDString = " id=\"$ID\"";
-
-		if($ShadowClass) $S .= "<div class=\"".$Class."\"$IDString><div class=\"".$ShadowClass."\">";
+		if($ShadowClass) $S .= "<div class=\"".$Class."\"><div class=\"".$ShadowClass."\">";
 
 		$S .= "<div";
 
@@ -79,16 +76,15 @@ class DivBox
 			$S .= " class=\"".$Class;
 			if($ShadowClass) $S .= ".inside";
 			$S .= "\"";
-			$S .= $IDString;
 		}
 		$S .= ">";
 
 		return($S."\n");
 	}
 
-	function PutBoxStart($Class = "", $ShadowClass = "", $ID = "")
+	function PutBoxStart($Class = "", $ShadowClass = "")
 	{
-		echo DivBox::GetBoxStart($Class, $ShadowClass, $ID);
+		echo DivBox::GetBoxStart($Class, $ShadowClass);
 	}
 
 	function GetBoxEnd($Shadow = FALSE)
@@ -105,9 +101,9 @@ class DivBox
 		echo DivBox::GetBoxEnd($Shadow);
 	}
 
-	function GetCreateBox($Content, $Class = "", $ShadowClass = "", $ID = "")
+	function GetCreateBox($Content, $Class = "", $ShadowClass = "")
 	{
-		$S = DivBox::GetBoxStart($Class, $ShadowClass, $ID);
+		$S = DivBox::GetBoxStart($Class, $ShadowClass);
 
 		$S .= $Content;
 

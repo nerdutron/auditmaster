@@ -25,6 +25,7 @@ class Table
 		$this->Row = 0;
 		$this->RowClass = array();
 		$this->RowID = array();
+		$this->RowStyle = array();
 
 		// alternate row presets
 		$this->AlternateRows = array();
@@ -72,9 +73,13 @@ class Table
 	{
 		$this->AddElement("</tfoot>");
 	}
-	function StartBody()
+	function StartBody($Extra = "")
 	{
-		$this->AddElement("<tbody>");
+		if (trim($Extra))
+			$Extra = " ".trim($Extra);
+		else
+			$Extra = "";
+		$this->AddElement("<tbody".$Extra.">");
 	}
 	function EndBody()
 	{
@@ -155,10 +160,11 @@ class Table
 	//
 	// end the row by incrementing the counter
 	//
-	function EndRow($Class = "", $ID = "")
+	function EndRow($Class = "", $ID = "", $Style = "")
 	{
 		$this->RowClass[$this->Row] = trim($Class);
 		$this->RowID[$this->Row] = trim($ID);
+		$this->RowStyle[$this->Row] = trim($Style);
 		if ($this->Data[$this->Row] != "")
 			$this->Row++;
 		$this->Data[$this->Row] = array();
@@ -210,26 +216,26 @@ class Table
 				if (sizeof($Data))
 				{
 					if (($ClassRow) && ($IDRow))
-						$Table .= "<tr id=\"".$IDRow."\" class=\"".$ClassRow."\">".$this->Join;
+						$Table .= "<tr id=\"".$IDRow."\" class=\"".$ClassRow."\"";
 					else if ($ClassRow)
-						$Table .= "<tr class=\"".$ClassRow."\">".$this->Join;
+						$Table .= "<tr class=\"".$ClassRow."\"";
 					else if ($IDRow)
-						$Table .= "<tr id=\"".$IDRow."\">".$this->Join;
+						$Table .= "<tr id=\"".$IDRow."\"";
 					elseif ($ClassAlt)
-						$Table .= "<tr class=\"".$ClassAlt."\">".$this->Join;
+						$Table .= "<tr class=\"".$ClassAlt."\"";
 					else
-						$Table .= "<tr>".$this->Join;
+						$Table .= "<tr";
+					if (trim($this->RowStyle[$r]))
+						$Table .= " style=\"".trim($this->RowStyle[$r])."\"";
+					$Table .= ">".$this->Join;
 
 					foreach ($Data as $Row)
 					{
+
 						$Class = "";
 						if ($Row["Type"] == "td")
-						{
-							$Class = $ClassAlt;
-							if ($ClassRow)
-								$Class = $ClassRow;
-						}
-						if (trim($Row["Class"]))
+							$Class = trim($ClassAlt." ".$ClassRow." ".$Row["Class"]);
+						else
 							$Class = trim($Row["Class"]);
 
 						$Table .= "<";

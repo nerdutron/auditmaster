@@ -80,22 +80,28 @@ class Lists
 					$this->AddData($Item, 1);
 			}
 		}
-		elseif (strtolower(get_class($Data)) == "lists")
+		elseif (gettype($Item) == "object")
 		{
-			$this->Data[] = $Data;
+			if (strtolower(get_class($Data)) == "lists")
+				$this->Data[] = $Data;
+			else
+				$this->Data[] = $Data;
 		}
 		else
-		{
 			$this->Data[] = $Data;
-		}
 	}
 
 	function Body()
 	{
 		$List = "";
 		foreach ($this->Data as $Item)
-			if (strtolower(get_class($Item)) == "lists")
-				$List .= $Item->Get();
+			if (gettype($Item) == "object")
+			{
+				if (strtolower(get_class($Item)) == "lists")
+					$List .= $Item->Get();
+				else
+					$List .= "<li>".$Item."</li>\n";
+			}
 			else
 				$List .= "<li>".$Item."</li>\n";
 		return ($List);

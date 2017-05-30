@@ -1,5 +1,4 @@
-<?php
-/*
+<?php /*
 Copyright: MU Systems Pty Ltd, 2004
 
 Optional Form Elements:

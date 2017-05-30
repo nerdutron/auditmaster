@@ -15,7 +15,15 @@ class ip
 {
 	function lookup($IP)
 	{
+		if(!strlen($IP))
+			$IP = "0.0.0.0";
 		$IP = explode(".", $IP);
+		$CIP = count($IP);
+		if($CIP < 4)
+		{
+			for($i=$CIP;$i<=4;$i++)
+				$IP[$i]=0;
+		}
 		$Query  = "";
 		$Query .= "SELECT country_code, country_name ";
 		$Query .= "FROM ip_list il, ip_countries ic ";
@@ -121,8 +129,13 @@ class webstats
 			if (in_array($Exclude, $Classes))
 				return;
 
+		if (trim($_SERVER["HTTP_X_FORWARDED_FOR"]))
+			$RemoteIP = $_SERVER["HTTP_X_FORWARDED_FOR"];
+		else
+			$RemoteIP = $_SERVER["REMOTE_ADDR"];
+
 		// remote country by ip
-		$Country = ip::lookup($_SERVER["REMOTE_ADDR"]);
+		$Country = ip::lookup($RemoteIP);
 
 		// referer domain
 		$Tmp = explode("//", $_SERVER["HTTP_REFERER"]);
@@ -138,7 +151,7 @@ class webstats
 		$INQ->Save("log_id", 0);
 		$INQ->Save("action", $Action);
 
-		$INQ->Save("remote", $_SERVER["REMOTE_ADDR"]);
+		$INQ->Save("remote", $RemoteIP);
 		$INQ->Save("country", array_pop($Country));
 		$INQ->Save("page", $_SERVER["REQUEST_URI"]);
 		if ($Entry)

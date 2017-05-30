@@ -113,6 +113,10 @@ class CreateXML
 		$this->P = 0;
 		// create an empty stack for tracking the depth
 		$this->S = array();
+
+		$this->Tab = 2;
+		$this->Space = " ";
+		$this->Break = "\n";
 	}
 
 	//
@@ -122,11 +126,11 @@ class CreateXML
 	{
 		// Do I know how this function works? Nope.
 		// This regex was 'written' using the PHP list in 3 minutes.
-		$Success = ereg('^[_[:alpha:]][-_.[:alnum:]]*$', $String);
+		$Success = preg_match('/^[_[:alpha:]][-_.[:alnum:]]*$/', $String);
 		// If it fails, halt execution and display an appropriate message
 		if(!$Success)
 		{
-			echo "\n\nXML CREATE ERROR: Invalid Open Tag\n\n";
+			echo "\n\nXML CREATE ERROR: Invalid Open Tag (".$String.")\n\n";
 			echo "It must contain only alphanumeric, \".\", \"_\" or \"-\".";
 			echo "\nThe first character must be alpha or \"_\".\n\n";
 			exit();
@@ -143,13 +147,13 @@ class CreateXML
 		$this->CheckTag($Name);
 
 		// Adds a key to the array indicating this is a start tag
-		$this->X[$this->P][key] = "start";
+		$this->X[$this->P]["key"] = "start";
 
 		// Adds the name of the tag to the array
-		$this->X[$this->P][tag] = $Name;
+		$this->X[$this->P]["tag"] = $Name;
 
 		// Adds the value to the array (with encoded characters)
-		$this->X[$this->P][val] = htmlspecialchars($Value);
+		$this->X[$this->P]["val"] = htmlspecialchars($Value);
 
 		// Pushes the tag name onto a stack
 		array_push($this->S, $Name);
@@ -173,17 +177,17 @@ class CreateXML
 			exit();
 		}
 		// Adds a key to the array indicating this is an attribute tag
-		$this->X[$this->P][key] = "attrb";
+		$this->X[$this->P]["key"] = "attrb";
 
 		// Adds that tag name to the array, using the 
 		// current stack entry
-		$this->X[$this->P][tag] = current($this->S);
+		$this->X[$this->P]["tag"] = current($this->S);
 
 		// Adds the name of the attribute to the array
-		$this->X[$this->P][att] = $Name;
+		$this->X[$this->P]["att"] = $Name;
 
 		// Adds the value to the array (with encoded characters)
-		$this->X[$this->P][val] = htmlspecialchars($Value);
+		$this->X[$this->P]["val"] = htmlspecialchars($Value);
 
 		// Increments the array pointer by one
 		$this->P++;
@@ -207,14 +211,14 @@ class CreateXML
 		//
 		// Key type is xmlstr
 		//
-		$this->X[$this->P][key] = "xmlstr";
+		$this->X[$this->P]["key"] = "xmlstr";
 
 		// Adds that tag name to the array, using the current
 		// stack entry
-		$this->X[$this->P][tag] = current($this->S);
+		$this->X[$this->P]["tag"] = current($this->S);
 
 		// Adds the string to the array (with encoded characters)
-		$this->X[$this->P][val] = $XMLStr;
+		$this->X[$this->P]["val"] = $XMLStr;
 
 		// Increments the array pointer by one
 		$this->P++;
@@ -232,14 +236,14 @@ class CreateXML
 			exit();
 		}
 		// Adds a key to the array indicating this is a tag value tag
-		$this->X[$this->P][key] = "value";
+		$this->X[$this->P]["key"] = "value";
 
 		// Adds that tag name to the array, using the current
 		// stack entry
-		$this->X[$this->P][tag] = current($this->S);
+		$this->X[$this->P]["tag"] = current($this->S);
 
 		// Adds the value to the array (with encoded characters)
-		$this->X[$this->P][val] = htmlspecialchars($Value);
+		$this->X[$this->P]["val"] = htmlspecialchars($Value);
 
 		// Increments the array pointer by one
 		$this->P++;
@@ -258,14 +262,14 @@ class CreateXML
 			exit();
 		}
 		// Adds a key to the array indicating this is a tag value tag
-		$this->X[$this->P][key] = "cdata";
+		$this->X[$this->P]["key"] = "cdata";
 
 		// Adds that tag name to the array, using the current
 		// stack entry
-		$this->X[$this->P][tag] = current($this->S);
+		$this->X[$this->P]["tag"] = current($this->S);
 
 		// Adds the value to the array
-		$this->X[$this->P][val] = $Value;
+		$this->X[$this->P]["val"] = $Value;
 
 		// Increments the array pointer by one
 		$this->P++;
@@ -281,14 +285,14 @@ class CreateXML
 		if(current($this->S) != $Name)
 		{
 			// If not, display an error and halt.
-			echo "\n\nXML CREATE ERROR: Unmatched Close Tag\n\n";
+			echo "\n\nXML CREATE ERROR: Unmatched Close Tag (".$Name.")\n\n";
 			exit();
 		}
 		// Adds a key to the array indicating this is a close tag
-		$this->X[$this->P][key] = "close";
+		$this->X[$this->P]["key"] = "close";
 
 		// Add the full closing tag name to the array
-		$this->X[$this->P][tag] = "/".$Name;
+		$this->X[$this->P]["tag"] = "/".$Name;
 
 		// Pop this tag name from the stack
 		array_pop($this->S);
@@ -296,6 +300,23 @@ class CreateXML
 
 		// Increments the array pointer by one
 		$this->P++;
+	}
+
+	function CompleteTag($Name, $Value = "", $Attributes = "")
+	{
+		$this->StartTag($Name, $Value);
+		if (is_array($Attributes))
+			foreach ($Attributes as $Key => $Val)
+				$this->AddAttribute($Key, $Val);
+		$this->CloseTag($Name);
+	}
+
+	function ConditionalTag($Name, $Value = "", $Attributes = "")
+	{
+		if (!is_array($Attributes))
+			$Attributes = array();
+		if (trim($Value) || sizeof($Attributes))
+			$this->CompleteTag($Name, $Value, $Attributes);
 	}
 
 	//
@@ -307,16 +328,17 @@ class CreateXML
 		// 4 spaces as a string for indenting the output.
 		// Customised indentation can be done by passing a value $N
 		// to the function (e.g., tag values need an additional space).
+		$S = ($this->D + $N - 1) * $this->Tab;
 		$Space = "";
-		for($i=1;$i<($this->D + $N);$i++)
-			$Space .= " ";
+		for($i=1;$i<=$S;$i++)
+			$Space .= $this->Space;
 		return($Space);
 	}
 
 	//
 	// A recursive function that generates the actual XML
 	//
-	function ProcessValuePairs()
+	function ProcessValuePairs(&$LastElement = "")
 	{
 		// This function loops through all of the elements that are 
 		// contained within this one tag. When a 'new' tag is found,
@@ -342,11 +364,21 @@ class CreateXML
 		$this->D++;
 
 		// Create the beginning of the tag
-		$Tag = $this->Spaces(0)."<".$this->X[$this->P][tag];
+		$Tag = "";
+		if ($LastElement == "open")
+			$Tag .= $this->Break;
+		$Tag .= $this->Spaces(0)."<".$this->X[$this->P]["tag"];
+		$LastElement = "open";
 
 		// If the tag has a value then add it to the content string
-		if($this->X[$this->P][val] != "")
-			$Content = $this->Spaces(1).$this->X[$this->P][val]."\n";
+		if($this->X[$this->P]["val"] != "")
+		{
+			if (in_array($LastElement, array("open")))
+				$Content = $this->X[$this->P]["val"];
+			else
+				$Content = $this->Spaces(1).$this->X[$this->P]["val"].$this->Break;
+			$LastElement = "content";
+		}
 		else
 			$Content = "";
 		// No attributes can be passed with a start tag
@@ -360,52 +392,58 @@ class CreateXML
 		// and We have not reached the close of this tag
 		//
 		$XSize = sizeof($this->X);
-		while(($this->P < $XSize) && ($this->X[$this->P][key] != "close"))
+		while(($this->P < $XSize) && ($this->X[$this->P]["key"] != "close"))
 		{
 			// What we do depends on the entry type
-			switch ($this->X[$this->P][key])
+			switch ($this->X[$this->P]["key"])
 			{
 				// If it is a new start tag call this function
 				case "start":
 					// Entire tag becomes this tag's content
-					$Content .= $this->ProcessValuePairs();
-				break;
+					$Content .= $this->ProcessValuePairs($LastElement);
+					break;
 
 				// If it is an attribute then add the name and
 				// value to the attribute string
 				case "attrb":
 					$Attributes .= " ";
-				$Attributes .= $this->X[$this->P][att];
-				$Attributes .= "=\"";
-				$Attributes .= $this->X[$this->P][val];
-				$Attributes .= "\"";
-				break;
+					$Attributes .= $this->X[$this->P]["att"];
+					$Attributes .= "=\"";
+					$Attributes .= $this->X[$this->P]["val"];
+					$Attributes .= "\"";
+					break;
 
 				// If a value  or xml str then add it to tag contents
 				case "value":
-					case "xmlstr":
+				case "xmlstr":
 					$Content .= $this->Spaces(1);
-				$Content .= $this->X[$this->P][val]."\n";
-				break;
+					$Content .= $this->X[$this->P]["val"].$this->Break;
+					break;
 
 				// If a CDATA value then add it to tag contents
 				case "cdata":
-					$Content .= $this->Spaces(1);
-				$Content .= "<![CDATA[".$this->X[$this->P][val]."]]>\n";
-				break;
+					$Content .= "<![CDATA[".$this->X[$this->P]["val"]."]]>";
+					$LastElement = "cdata";
+					break;
 			}
 			// Increment th array pointer by one
 			$this->P++; 
 		}
 		// When we are done looping:
 		// Add the attributes to the tag to create the full tag name
-		$Tag .= current($this->S).$Attributes.">\n";
+		$Tag .= current($this->S).$Attributes.">";
+//		$LastElement = "open";
 
 		// Add the contents to the tag
 		$Tag .= $Content;
 
 		// Add the close to the tag and content
-		$Tag .= $this->Spaces(0)."<".$this->X[$this->P][tag].">\n";
+
+		if (in_array($LastElement, array("open", "content", "cdata")))
+			$Tag .= "<".$this->X[$this->P]["tag"].">".$this->Break;
+		else
+			$Tag .= $this->Spaces(0)."<".$this->X[$this->P]["tag"].">".$this->Break;
+		$LastElement = "close";
 
 		// Decrement the Depth counter
 		$this->D--;
@@ -440,6 +478,40 @@ class CreateXML
 		// If a header was passed, add it to the beginning of the XML
 		if ($Header)
 			$XMLString = $Header."\n".$XMLString;
+
+		// Return the complete XML string
+		return($XMLString);
+	}
+
+	//
+	// Returns the full formatted XML string or document
+	//
+	function GenerateCompressedXML($Header = "")
+	{
+		$this->Space = "";
+		$this->Break = "";
+
+		// If we have anything in the stack, then we have unclosed tags
+		if(count($this->S))
+		{
+			// Display appropriate error message and halt
+			echo "\n\nXML CREATE ERROR: Not All Tags Closed\n\n";
+			exit();
+		}
+		// Set the array pointer to zero
+		$this->P = 0;
+
+		// Set the depth counter to zero
+		$this->D = 0;
+
+		// Note that this is used SOLELY for formatting output neatly
+
+		// Call a recursive function for generating the XML
+		$XMLString = $this->ProcessValuePairs();
+
+		// If a header was passed, add it to the beginning of the XML
+		if ($Header)
+			$XMLString = $Header.$this->Break.$XMLString;
 
 		// Return the complete XML string
 		return($XMLString);

@@ -886,7 +886,9 @@ class SecurePublicObject extends Variable
 		else
 			$this->Encrypt = 0;
 
-		$this->CookiePath = dirname($_SERVER["REQUEST_URI"]);
+		// $this->CookiePath = dirname($_SERVER["REQUEST_URI"]); // THIS IS THE OLD WAY THAT BREAKS WHERE A / APPEARS IN ANY URL PARAMETER
+		$Parts = explode("/index.", $_SERVER["REQUEST_URI"]);
+		$this->CookiePath = dirname($Parts[0]);
 		if ($this->CookiePath != "/")
 			$this->CookiePath .= "/"; 
 		$Parts = explode(":", $_SERVER["HTTP_HOST"]);
@@ -914,16 +916,25 @@ class SecurePublicObject extends Variable
 			//              0                  1          2         3         4       5        6           7
 		$this->OS["TB"] = $Table;
 
-		if (($this->OS_KEY == "") && $_REQUEST[COOKIE_NAME])
+		if (strstr($this->OS_LOGIN, "@"))
 		{
-			$this->OS_KEY = $_REQUEST[COOKIE_NAME];
+			$Query = "SELECT COUNT(*) FROM ".$Table[0]." WHERE ".$Table[7]." = '".sql::text($this->OS_LOGIN)."' AND active = 1"; 
+			if (DBGet($this->OS["DB"], $Query) == 1)
+			{
+				$Query = "SELECT ".$Table[5]." FROM ".$Table[0]." WHERE ".$Table[7]." = '".sql::text($this->OS_LOGIN)."' AND active = 1"; 
+				$this->OS_LOGIN = DBGet($this->OS["DB"], $Query);
+			}
+		}
+
+		if (($this->OS_KEY == "") && $_COOKIE[COOKIE_NAME])
+		{
+			$this->OS_KEY = $_COOKIE[COOKIE_NAME];
 			// resetting a cookie
 			if ($Type != "HARD")
 			{
 				$this->SetCookies($this->OS_KEY, $this->Expires, $this->CookiePath, $this->CookieHost);
 			}
 		}
-
 		switch ($this->OS_FORM)
 		{
 			case "Lock":
@@ -1119,8 +1130,13 @@ class SecurePublicObject extends Variable
 
 	function GetHere()
 	{
+		$ServerPort = $_SERVER["SERVER_PORT"];
+		if ($_SERVER["HTTP_X_FORWARDED_PORT"])
+			$ServerPort = $_SERVER["HTTP_X_FORWARDED_PORT"];
+
 		$URL  = "";
-		if ($_SERVER["SERVER_PORT"] == 443)
+	//	if ($_SERVER["SERVER_PORT"] == 443)
+		if ($ServerPort == 443)
 			$URL .= "https://";
 		else
 			$URL .= "http://";
@@ -1157,9 +1173,7 @@ class SecurePublicObject extends Variable
 			$Query .= "FROM ".$this->OS["TB"][0]." ";
 			$Query .= "WHERE ".$this->OS["TB"][2]." ";
 			$Query .= "AND ".$this->OS["TB"][5]." = '".sql::text($Login)."' ";
-
 			$UPASS = DBGet($this->OS["DB"], $Query);
-
 			$Key = substr($UPASS, 0, 2);
 			$Query  = "SELECT ".$this->OS["TB"][1]." ";
 			$Query .= "FROM ".$this->OS["TB"][0]." ";
@@ -1271,7 +1285,7 @@ class SecurePublicObject extends Variable
 
 	function GetKey()
 	{
-		if ($_REQUEST[COOKIE_NAME])
+		if ($_COOKIE[COOKIE_NAME])
 			return ("");
 		else
 			return ($this->OS_KEY);
@@ -1279,8 +1293,8 @@ class SecurePublicObject extends Variable
 
 	function GetObjectKey()
 	{
-		if ($_REQUEST[COOKIE_NAME])
-			return ($_REQUEST[COOKIE_NAME]);
+		if ($_COOKIE[COOKIE_NAME])
+			return ($_COOKIE[COOKIE_NAME]);
 		else
 			return ($this->OS_KEY);
 	}
@@ -1581,11 +1595,14 @@ class ObjectSecurityShow
 			$Q->Run($this->DB, "select * from ".$this->T2[0]." where ".$this->T2[1]." = '".sql::text($Object)."'");
 			while ($Q->Next())
 			{
-				echo "<tr>\n";
-				echo "<td>".$Users[$Q->GetField($this->T2[3])]."</td>\n";
-				echo "<td>".$Modes[$Q->GetField($this->T2[2])]."</td>\n";
-				echo "</tr>\n";
-				$Objects[$Q->GetField($this->T1[1])] = $Q->GetField($this->T1[2]);
+				if (trim($Users[$Q->GetField($this->T2[3])]))
+				{
+					echo "<tr>\n";
+					echo "<td>".$Users[$Q->GetField($this->T2[3])]."</td>\n";
+					echo "<td>".$Modes[$Q->GetField($this->T2[2])]."</td>\n";
+					echo "</tr>\n";
+					$Objects[$Q->GetField($this->T1[1])] = $Q->GetField($this->T1[2]);
+				}
 			}
 			$Q->EndQuery();
 			ksort($Objects);

@@ -11,8 +11,9 @@ class ACROBAT extends Cezpdf
 {
 	function __construct()
 	{
-		$this->WorkingPath = PDF_IMG;
-		if (trim($WorkingPath) == "")
+		if (defined("PDF_IMG"))
+			$this->WorkingPath = PDF_IMG;
+		if (!isset($this->WorkingPath))
 			$this->WorkingPath = "/tmp/";
 		$this->Table = array();
 		$this->Contents = array();
@@ -43,6 +44,14 @@ class ACROBAT extends Cezpdf
 
 		$this->TitleStyle[4] = $this->TitleStyle[3];
 		$this->TitleStyle[4]["size"]		= 12;
+
+		$this->TitleIndexLevel = 0;
+
+		$this->TitleIndexes = array();
+		$this->TitleIndexes[1] = 0;
+		$this->TitleIndexes[2] = 0;
+		$this->TitleIndexes[3] = 0;
+		$this->TitleIndexes[4] = 0;
 	}
 
 	function ResetObjectProperties()
@@ -62,15 +71,20 @@ class ACROBAT extends Cezpdf
 		$this->Cezpdf($PaperSize, $Orientation);
 		if (in_array($this->HeaderCover, array("cover", "nz_cover")))
 			$this->ezNewPage();
-			
 		$this->ChangeFont('Helvetica');
 
-		$T = 30;
-		$B = 30;
-		$L = 30;
-		$R = 30;
 		$T = $this->HeaderMargins("header", $this->HeaderRest);
 		$B = $this->HeaderMargins("footer", $this->HeaderRest);
+		$R = $this->HeaderMargins("right", $this->HeaderRest);
+		$L = $this->HeaderMargins("left", $this->HeaderRest);
+		if (!$T)
+			$T = 30;
+		if (!$B)
+			$B = 30;
+		if (!$R)
+			$R = 30;
+		if (!$L)
+			$L = 30;
 		$this->ezSetMargins($T,$B,$L,$R);
 	}
 
@@ -116,10 +130,9 @@ class ACROBAT extends Cezpdf
 
 	function ProcessHeader()
 	{
-//		$ID = $this->getFirstPageId();
 		$ID = $this->ezPages[1];
 		$this->reopenObject($ID);
-		$this->GetHeaderData($this->HeaderCover);
+		$this->GetHeaderData($this->HeaderCover, 1);
 		$this->GetFooterData($this->HeaderCover, 1, sizeof($this->ezPages));
 		$this->closeObject($ID);
 
@@ -127,7 +140,7 @@ class ACROBAT extends Cezpdf
 		{
 			$ID = $this->ezPages[$i];
 			$this->reopenObject($ID);
-			$this->GetHeaderData($this->HeaderRest);
+			$this->GetHeaderData($this->HeaderRest, $i);
 			$this->GetFooterData($this->HeaderRest, $i, sizeof($this->ezPages));
 			$this->closeObject($ID);
 		}
@@ -141,7 +154,8 @@ class ACROBAT extends Cezpdf
 
 	function HeaderMargins($Type, $Data)
 	{
-		return ($this->Margins[strtolower($Type)][strtolower($Data)]);
+		if (isset($this->Margins) && is_array($this->Margins) && isset($this->Margins[strtolower($Type)]) && is_array($this->Margins[strtolower($Type)]) && isset($this->Margins[strtolower($Type)][strtolower($Data)]))
+		  return ($this->Margins[strtolower($Type)][strtolower($Data)]);
 	}
 
 	function mm($mm)
@@ -434,11 +448,11 @@ class ACROBAT extends Cezpdf
 			$this->HeaderRest = $this->HeaderCover;
 	}
 
-	function GetHeaderData($UseHeader)
+	function GetHeaderData($UseHeader, $PageNum)
 	{
 		$Func = trim("HeaderData".ucfirst(strtolower($UseHeader)));
 		if ($Func != "HeaderData")
-			$this->$Func();
+			$this->$Func($PageNum);
 	}
 
 	function GetFooterData($UseFooter, $PageNum, $TotalPageNum)
@@ -447,7 +461,7 @@ class ACROBAT extends Cezpdf
 		$this->FooterTotalPageNum = ($TotalPageNum * 1);
 		$Func = trim("FooterData".ucfirst(strtolower($UseFooter)));
 		if ($Func != "FooterData")
-			$this->$Func();
+			$this->$Func($PageNum);
 	}
 
 	function FullLine($Y, $Style = 1, $Dotted = false, $Coloured = false)
@@ -563,11 +577,11 @@ class ACROBAT extends Cezpdf
 		for($i=0;$i<sizeof($DataArray);$i++)
 		{
 			$TempArray["Col".$i] = $DataArray[$i];
-			if(count($DataTextColor[$i]))
+			if(is_array($DataTextColor) && isset($DataTextColor[$i]) && count($DataTextColor[$i]))
 			{
 				$TempArray["TextColor".$i] = $DataTextColor[$i];
 			}
-			if(count($DataShadeColor[$i]))
+			if(is_array($DataShadeColor) && isset($DataShadeColor[$i]) && count($DataShadeColor[$i]))
 			{
 				$TempArray["ShadeColor".$i] = $DataShadeColor[$i];
 			}
@@ -639,8 +653,58 @@ class ACROBAT extends Cezpdf
 		}
 	}
 
-	function DisplayTitle($Text, $Level = 1)
+	function TitleIndexLevel($Level)
 	{
+		$Level = $Level * 1;
+		if (in_array($Level, array(0, 1, 2, 3, 4)))
+			$this->TitleIndexLevel = $Level;
+	}
+
+	function DisplayTitle($Text, $Level = 1, $Hide = 0, $Identifier = "")
+	{
+		$TitlePrefix = "";
+		if ($Level <= $this->TitleIndexLevel)
+		{
+			switch($Level)
+			{
+				case 1:
+					$this->TitleIndexes[1]++;
+					$this->TitleIndexes[2] = 0;
+					$this->TitleIndexes[3] = 0;
+					$this->TitleIndexes[4] = 0;
+					$TitlePrefix = $this->TitleIndexes[1].". ";
+					break;
+				case 2:
+					if (!$this->TitleIndexes[1])
+						$this->TitleIndexes[1]++;
+					$this->TitleIndexes[2]++;
+					$this->TitleIndexes[3] = 0;
+					$this->TitleIndexes[4] = 0;
+					$TitlePrefix = $this->TitleIndexes[1].".".$this->TitleIndexes[2].". ";
+					break;
+				case 3:
+					if (!$this->TitleIndexes[1])
+						$this->TitleIndexes[1]++;
+					if (!$this->TitleIndexes[2])
+						$this->TitleIndexes[2]++;
+					$this->TitleIndexes[3]++;
+					$this->TitleIndexes[4] = 0;
+					$TitlePrefix = $this->TitleIndexes[1].".".$this->TitleIndexes[2].".".$this->TitleIndexes[3].". ";
+					break;
+				case 4:
+					if (!$this->TitleIndexes[1])
+						$this->TitleIndexes[1]++;
+					if (!$this->TitleIndexes[2])
+						$this->TitleIndexes[2]++;
+					if (!$this->TitleIndexes[3])
+						$this->TitleIndexes[3]++;
+					$this->TitleIndexes[4]++;
+					$TitlePrefix = $this->TitleIndexes[1].".".$this->TitleIndexes[2].".".$this->TitleIndexes[3].".".$this->TitleIndexes[4].". ";
+					break;
+			}
+		}
+		$Text = $TitlePrefix.$Text;
+
 		$i = sizeof($this->Contents);
 
 		if (!in_array($Level, array(1,2,3,4)))
@@ -672,11 +736,27 @@ class ACROBAT extends Cezpdf
 		elseif ($this->TitleStyle[$Level]["above"])
 			$this->ezSetDy(-round($Size * $this->TitleStyle[$Level]["above"]));
 
-		$this->addDestination("A".$i, "FitH", $this->y);
+		if (trim($Identifier))
+		{
+			$Found = 0;
+			foreach ($this->Contents as $Row)
+				if ($Row["Identifier"] == $Identifier)
+					$Found++;
+			if ($Found)
+				$Identifier = "";
+		}
+		if (!$Identifier)
+			$Identifier = "A".$i;
+
+		$this->addDestination($Identifier, "FitH", $this->y);
 		$this->ezText($Text, $Size, $Options);
+// $this->ezText($Text." | ".$Identifier, $Size, $Options);
+		$this->Contents[$i] = array();
+		$this->Contents[$i]["Hide"] = $Hide;
 		$this->Contents[$i]["Text"] = $Text;
 		$this->Contents[$i]["Level"] = $Level;
 		$this->Contents[$i]["Page"] = sizeof($this->ezPages);
+		$this->Contents[$i]["Identifier"] = $Identifier;
 
 		if ($this->TitleStyle[$Level]["below"])
 			$this->ezSetDy(-round($Size * $this->TitleStyle[$Level]["below"]));
@@ -706,16 +786,19 @@ class ACROBAT extends Cezpdf
 		$this->DisplayCode($Text, 1);
 	}
 
-	function DisplayContents($Page, $Level = 1, $Text = "Contents", $Color = array(), $GapSize = 0)
+	function DisplayContents($Page, $Level = 1, $Text = "Contents", $Color = array(), $GapSize = 0, $FontSize = 12)
 	{
 		// create a new page and get the object id
 		$PageObjectID = $this->newPage(1, $this->ezPages[$Page], "before");
 		$this->ezPageInsert($Page, $PageObjectID);
 
 		// add a title to the contents page
-		$this->setColor(0,0,0);
-		$this->ChangeFont('Helvetica');
-		$this->TextCenter("<b>".$Text."</b>", $this->ez["leftMargin"], ($this->ez["pageHeight"] - $this->ez["topMargin"] - 30), 24, ($this->ez["pageWidth"] - $this->ez["leftMargin"] - $this->ez["rightMargin"]));
+		if ($Text)
+		{
+			$this->setColor(0,0,0);
+			$this->ChangeFont('Helvetica');
+			$this->TextCenter("<b>".$Text."</b>", $this->ez["leftMargin"], ($this->ez["pageHeight"] - $this->ez["topMargin"] - 30), $this->TitleStyle[$Level]["size"], ($this->ez["pageWidth"] - $this->ez["leftMargin"] - $this->ez["rightMargin"]));
+		}
 
 		// change the font to Helvetica
 		$this->ChangeFont("Helvetica");
@@ -730,7 +813,7 @@ class ACROBAT extends Cezpdf
 		$c = 0;
 
 		// this is our font height
-		$S = 12;
+		$S = $FontSize;
 
 		// the size of the writeable area on the page
 		$Y = $this->ez["pageHeight"] - $this->ez["topMargin"] - 60 - $GapSize;
@@ -747,7 +830,7 @@ class ACROBAT extends Cezpdf
 		for ($i=0;$i<sizeof($this->Contents);$i++)
 		{
 			// if this item is on a low enough level to be displayed:
-			if ($this->Contents[$i]["Level"] <= $Level)
+			if (($this->Contents[$i]["Level"] <= $Level) && !$this->Contents[$i]["Hide"])
 			{
 				// calculate the Y coordinate: page size - how many lines we have done so far - size of the font
 				$thisY = $Y - ($c * $L);
@@ -776,10 +859,10 @@ class ACROBAT extends Cezpdf
 				$Y2 = $Y1 + $L;
 
 				// add the clickable content link
-				$this->addInternalLink("A".$i, $X1, $Y1, $X2, $Y2);
+				$this->addInternalLink($this->Contents[$i]["Identifier"], $X1, $Y1, $X2, $Y2);
 
 				// get the X (left) coordinate of the text - increases with each level
-				$textX = $this->Contents[$i]["Level"] * $this->ez["leftMargin"];
+				$textX = $this->ez["leftMargin"] + (($this->Contents[$i]["Level"] - 1) * $this->mm(5));
 
 				// show the text of the item
 				$this->addText($textX, $thisY, $S, $this->Contents[$i]["Text"], 0,0,$Color);

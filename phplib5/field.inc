@@ -283,6 +283,24 @@ class Field
 		return ($Return);
 	}
 
+	function GetImageSubmit($Image, $Name = "", $Extra = "")
+	{
+		$Return  = "";
+		$Return .= "<input";
+		$Return .= " type=\"image\"";
+		if ($Name)
+			$Return .= " name=\"".$Name."\"";
+		$Return .= " src=\"".$Image."\"";
+		$Return .= " ".$Extra;
+
+		if (defined("FORM_CLICK_TRAP"))
+		{
+			$Return .= " onClick=\"return DoubleClickTrapperAction();\"";
+		}
+		$Return .= " />\n";
+		return ($Return);
+	}
+
 	function GetFormButton($Label, $Name = "", $Extra = "")
 	{
 		$Return  = "";
@@ -483,6 +501,36 @@ class Field
 		return ($Return);
 	}
 
+	//
+	// returns a string of HTML containing radio buttons and labels, separated by <br /> tags
+	//
+	// 		$Name
+	// 			What to use for the name="..." attribute of each radio field
+	// 		$Select
+	// 			The radio button with this value will be selected by default. Set $Select = FALSE to prevent any checkboxes being
+	// 			selected by default.
+	//
+	function GetRadioWithLabel($Name, $Select, $Values, $Cols = 0, $Extra = "", $Separator = "<br />\n")
+	{
+		$Return = "";
+
+		static $i = 0;
+		foreach ($Values as $Data => $Label)
+		{
+			$CheckboxID = "RadioWithLabel_" . ++$i;
+			$Return .= "<input type=\"radio\" name=\"" . htmlentities($Name) . "\" value=\"" . htmlentities($Data) . "\"";
+			if ($Select !== null && $Data == $Select)
+				$Return .= " checked";
+			$Return .= " " . $Extra;
+			$Return .= " id=\"" . htmlentities($CheckboxID) . "\"";
+			$Return .= " />\n";
+			$Return .= "<label for=\"" . htmlentities($CheckboxID) . "\">" . htmlentities($Label) . "</label>\n";
+			$Return .= $Separator;
+		}
+
+		return $Return;
+	}
+
 	function GetSmartRadio($Name, $Select, $Values, $Cols = 0, $Extra = "", $Reset = 0, $Hide = 0, $Order = "")
 	{
 		if ($Reset == 0)
@@ -642,6 +690,31 @@ class Field
 		$Return .= "</select>\n";
 		return ($Return);
 	}
+
+	function GetMultipleDrop($Name, $Select, $Values, $Extra = "")
+	{
+		$Return = "";
+		$Return .= "<select name=\"".$Name."\" ".$Extra." multiple>\n";
+
+		if (is_array($Values))
+		{
+			foreach ($Values as $Data => $Label)
+			{
+				$Return .= "<option value=\"".$Data."\"";
+				if (is_array($Select) && in_array($Data, $Select))
+					$Return .= " selected";
+				else if("$Select" == "$Data")
+					$Return .= " selected";
+
+				$Return .= ">";
+				$Return .= $Label;
+				$Return .= "</option>\n";
+			}
+		}
+
+		$Return .= "</select>\n";
+		return ($Return);
+	}
  
 	function GetSmartDrop($Name, $Select, $Values, $Extra = "", $Reset = 0, $Hide = 0, $Order = "")
 	{
@@ -737,9 +810,9 @@ class Field
 		echo field::GetFormReset($Label, $Extra);
 	}
 
-	function PutHidden($Name, $Value)
+	function PutHidden($Name, $Value, $Extra = "")
 	{
-		echo field::GetHidden($Name, $Value);
+		echo field::GetHidden($Name, $Value, $Extra);
 	}
 
 	function PutPassword($Name, $Size = 0, $Max = 0, $Extra = "")

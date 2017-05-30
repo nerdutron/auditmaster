@@ -49,32 +49,40 @@ class Script
 		return ($Log);
 	}
 
-	function Open()
+	function Open($SleepSeconds = 0)
 	{
 		$Q = new DBQuery;
-		$Query = "select max(log_id) as log_id from script_log where script_code = '".addslashes($this->ScriptCode)."'";
-		$Q->RunOne($this->DB, $Query);
-		$LogID = $Q->GetField("log_id");
-		if ($LogID)
-		{
-			$Q->EndQuery();
-			$Query = "select * from script_log where log_id = ".$LogID;
-			$Q->RunOne($this->DB, $Query);
-		}
-		$this->ProcessID = $Q->GetField("process_id");
-		$this->ProcessName = $Q->GetField("process_name");
-		$Restarts = $Q->GetField("is_restart");
 
-		if ($Q->GetField("active_status") == 3)
+		$i = 0;
+		$ActiveStatus = 10;
+		while (($ActiveStatus <> 0) && ($i <= $SleepSeconds))
+		{
+			$Query = "select max(log_id) as log_id from script_log where script_code = '".addslashes($this->ScriptCode)."'";
+			$LogID = DBGet($this->DB, $Query);
+			if ($LogID)
+			{
+				$Query = "select * from script_log where log_id = ".$LogID;
+				$Data = DBRow($this->DB, $Query);
+			}
+			$this->ProcessID = $Data["process_id"];
+			$this->ProcessName = $Data["process_name"];
+			$Restarts = $Data["is_restart"];
+			$ActiveStatus = ($Data["active_status"] * 1);
+			$i++;
+			if ($ActiveStatus <> 0)
+				sleep(1);
+		}
+
+		if ($ActiveStatus == 3)
 		{
 			echo "\n\nThis script has crashed too many times. Please check for process errors before resetting logs.\n\n";
 			exit();
 		}
 
-		if ($Q->GetField("active_status"))
+		if ($ActiveStatus)
 		{
-			$Duration = mktime() - CreateTimeStamp($Q->GetField("date_time"));
-			if ($Q->GetField("active_status") > 1)
+			$Duration = mktime() - CreateTimeStamp($Data["date_time"]);
+			if ($ActiveStatus > 1)
 				$Duration = $Duration + $this->Timeout;
 
 			if ($this->ProcessName != $this->GetProcessName($this->ProcessID))
@@ -106,7 +114,7 @@ class Script
 
 			echo "\n\nA process is currently running (started ".$Duration." seconds ago). Please try again later.\n\n";
 	
-			if (($Q->GetField("active_status") == 1) && ($Duration > $this->Timeout))
+			if (($ActiveStatus == 1) && ($Duration > $this->Timeout))
 			{
 				$Minutes = $this->Timeout / 60;
 				$Message = " Timeout: currently at ".$Minutes." minutes.";
@@ -119,9 +127,18 @@ class Script
 			}
 			exit();
 		}
-		$Q->EndQuery();
 
 		$this->LogEntry(1, 0, $this->GetProcessID(), $this->GetProcessName($this->GetProcessID()));
+		$this->LogClean();
+	}
+
+	function LogClean()
+	{
+		$Query  = "";
+		$Query .= "DELETE FROM script_log ";
+		$Query .= "WHERE script_code = '".sql::text($this->ScriptCode)."' ";
+		$Query .= "AND date_time < '".date("Y-m-d H:i:s", strtotime("1 day ago"))."' ";
+		DB_DoQuery($this->DB, $Query);
 	}
 
 	function LogEntry($Status, $Restart, $ProcessID, $ProcessName)

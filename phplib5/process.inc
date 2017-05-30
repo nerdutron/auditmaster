@@ -16,6 +16,37 @@ class Process
 		$this->HostName = $HostName;
 	}
 
+	function ProcessList($ProcessID = 0)
+	{
+		$Fields = array("queue_id", "delivery", "target", "status", "summary", "object_name", "object_path", "created", "owner", "host", "priority", "queued", "after", "processed", "delivered", "archived", "keep_until");
+		$T = new Table;
+		foreach ($Fields as $Field)
+			$T->AddHead($Field);
+		$T->EndRow();
+		$Query  = "";
+		$Query .= "SELECT ";
+		$Query .= implode(", ", $Fields)." ";
+		$Query .= "FROM process_queue ";
+		if ($ProcessID)
+			$Query .= "WHERE queue_id = ".sql::integer($ProcessID)." ";
+		$Query .= "ORDER BY queue_id ";
+		$Q = new DBQuery;
+		$Q->Run(PROCESS_DB, $Query);
+		while ($Q->Next())
+		{
+			foreach ($Fields as $Field)
+				$T->AddData($Q->GetField($Field));
+			$T->EndRow();
+		}
+		$Q->EndQuery();
+		$T->Put();
+	}
+
+	function ProcessShow($ProcessID)
+	{
+		$this->ProcessList($ProcessID);
+	}
+
 	function ProcessLoad($ID)
 	{
 		$this->ID = $ID;
@@ -23,11 +54,11 @@ class Process
 		$Q->RunOne(PROCESS_DB, "select * from process_queue where queue_id = ".$this->ID);
 		$this->Status = $Q->GetField("status");
 		$this->Target = $Q->GetField("target");
-		$this->Stored = $Q->GetField("stored");
+		$this->Stored = $Q->GetField("created");
 		$this->Delivery = $Q->GetField("delivery");
 		$this->Priority = $Q->GetField("priority");
 		$this->Summary = $Q->GetField("summary");
-		$this->Generated = $Q->GetField("generated");
+		$this->Generated = $Q->GetField("processed");
 		$this->Delivered = $Q->GetField("delivered");
 		$this->KeepUntil = $Q->GetField("keep_until");
 
@@ -108,14 +139,15 @@ class Process
 	function ProcessDelete($ID, $HostName = "")
 	{
 		$Q = new DBQuery;
-		$Query = "SELECT stored, object FROM process_queue WHERE queue_id = ".$ID." AND host = '".addslashes($HostName)."'";
+		$Query = "SELECT created, object FROM process_queue WHERE queue_id = ".$ID." AND host = '".addslashes($HostName)."'";
 		$Data = DBRow(PROCESS_DB, $Query);
 		if (sizeof($Data))
 		{
 			$Query = "delete from process_queue where queue_id = ".$ID;
 			DB_DoQuery(PROCESS_DB, $Query);
-			if ($Data["stored"] != "db")
-				unlink($Data["object"]);
+			if ($Data["created"] != "db")
+				if (is_file($Data["object"]))
+					unlink($Data["object"]);
 		}
 	}
 
@@ -172,7 +204,7 @@ class Process
 				break;
 			case "process":
 				$INQ->Save("status", "advance");
-				$INQ->Save("generated", date("Y-m-d H:i:s"));
+				$INQ->Save("processed", date("Y-m-d H:i:s"));
 				break;
 			default:
 				$INQ->Save("status", "advance");
@@ -184,11 +216,11 @@ class Process
 		switch(strtolower($Stored))
 		{
 			case "db":
-				$INQ->Save("stored", "db");
+				$INQ->Save("created", "db");
 				$INQ->Save("object", serialize($Document));
 				break;
 			case "fs":
-				$INQ->Save("stored", "fs");
+				$INQ->Save("created", "fs");
 				$FileName = $this->_CreateFileName();
 				file_put_contents($FileName, serialize($Document));
 				$INQ->Save("object", $FileName);
@@ -222,11 +254,11 @@ class Process
 			$INQ->Save("target", "");
 		}
 		$INQ->Save("status", "advance");
-		$INQ->Save("generated", "0000-00-00 00:00:00");
+		$INQ->Save("processed", "0000-00-00 00:00:00");
 		$INQ->Save("delivered", "0000-00-00 00:00:00");
 		$INQ->Save("archived", "0000-00-00 00:00:00");
 
-		switch(strtolower($Process["stored"]))
+		switch(strtolower($Process["created"]))
 		{
 			case "db":
 				$INQ->Save("object", $Process["seed"]);
@@ -252,7 +284,7 @@ class Process
 		{
 			$Query  = "SELECT queue_id FROM process_queue ";
 			$Query .= "WHERE status <> '' ";
-			$Query .= "AND generated = '0000-00-00 00:00:00' ";
+			$Query .= "AND processed = '0000-00-00 00:00:00' ";
 			$Query .= "AND after < '".date("Y-m-d H:i:s")."' ";
 			if ($State == 0)
 				$Query .= "AND host = '".$HostName."' ";
@@ -281,7 +313,7 @@ class Process
 				if ($this->Document->Get("abort"))
 					$this->ProcessDelete($this->ID);
 				else
-					$this->_ProcessSave("generated");
+					$this->_ProcessSave("processed");
 				InsertProcessingDelay(1);
 			}
 			$Q->EndQuery();
@@ -342,7 +374,7 @@ class Process
 			$Q = new DBQuery;
 			$Query  = "select queue_id from process_queue ";
 			$Query .= "where status <> '' ";
-			$Query .= "and generated <> '0000-00-00 00:00:00' ";
+			$Query .= "and processed <> '0000-00-00 00:00:00' ";
 			$Query .= "and delivered = '0000-00-00 00:00:00' ";
 			if ($Priority)
 				$Query .= "and priority > 0 ";
@@ -397,7 +429,7 @@ class Process
 		$Q = new DBQuery;
 		$Query  = "select queue_id from process_queue ";
 		$Query .= "where status <> '' ";
-		$Query .= "and generated <> '0000-00-00 00:00:00' ";
+		$Query .= "and processed <> '0000-00-00 00:00:00' ";
 		$Query .= "and delivered <> '0000-00-00 00:00:00' ";
 		$Query .= "and archived = '0000-00-00 00:00:00' ";
 		$Query .= "order by queue_id";
@@ -442,7 +474,7 @@ class Process
 			while ($Q->Next())
 			{
 				$Process = $Q->GetArray();
-				switch($Process["stored"])
+				switch($Process["created"])
 				{
 					case "db":
 						$Process["object"] = base64_encode($Process["object"]);
@@ -494,7 +526,7 @@ class Process
 			$INQ->Save("summary", $Process["summary"]);
 			$INQ->Save("object_name", $Process["object_name"]);
 			$INQ->Save("object_path", INCLUDE_DIR.$Process["object_name"].".inc");
-			switch($Process["stored"])
+			switch($Process["created"])
 			{
 				case "db":
 					$INQ->Save("object", base64_decode($Process["object"]));
@@ -505,13 +537,13 @@ class Process
 					$INQ->Save("object", $FileName);
 					break;
 			}
-			$INQ->Save("stored", $Process["stored"]);
+			$INQ->Save("created", $Process["created"]);
 			$INQ->Save("owner", $Process["owner"]);
 			$INQ->Save("host", "");
 			$INQ->Save("priority", $Process["priority"]);
 			$INQ->Save("queued", $Process["queued"]);
 			$INQ->Save("after", $Process["after"]);
-			$INQ->Save("generated", $Process["generated"]);
+			$INQ->Save("processed", $Process["processed"]);
 			$INQ->Save("delivered", $Process["delivered"]);
 			$INQ->Save("archived", $Process["archived"]);
 			$INQ->Save("keep_until", $Process["keep_until"]);
@@ -569,13 +601,13 @@ CREATE TABLE process_queue (
   object_name varchar(128) NOT NULL default '',
   object_path varchar(255) NOT NULL default '',
   object longtext NOT NULL,
-  stored char(2) NOT NULL default 'db',
+  created char(2) NOT NULL default 'db',
   owner int(11) NOT NULL default '0',
   host varchar(32) NOT NULL default '',
   priority tinyint(4) NOT NULL default '0',
   queued datetime NOT NULL default '0000-00-00 00:00:00',
   after datetime NOT NULL default '0000-00-00 00:00:00',
-  generated datetime NOT NULL default '0000-00-00 00:00:00',
+  processed datetime NOT NULL default '0000-00-00 00:00:00',
   delivered datetime NOT NULL default '0000-00-00 00:00:00',
   archived datetime NOT NULL default '0000-00-00 00:00:00',
   keep_until date NOT NULL default '0000-00-00',

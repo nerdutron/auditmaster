@@ -386,7 +386,7 @@ class files
 		$Title = $Data["title"];
 		$Title = str_replace(array("\'","\"","\\","/"), "", $Title);
 		$Title = str_replace(" ", "_", $Title);
-		header("Content-Disposition: attachment; filename=".$Title.".".$Data["ext"]);
+		header("Content-Disposition: attachment; filename=\"".$Title.".".$Data["ext"]."\"");
 		echo $FileData;
 		exit;
 	}

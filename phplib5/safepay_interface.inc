@@ -919,11 +919,6 @@ function CheckCCardExpiry($Expiry)
 		return 0;
 */
 
-
-	// if year is more than 10 years into the future, it's invalid
-	if($Year > (date("y") + 10))
-		return 0;
-
 	return 1;
 }
 

@@ -1,5 +1,4 @@
-<?php
-require_once(PHPLIB_DIR."/barcode/barcode.inc");
+<?php require_once(PHPLIB_DIR."/barcode/barcode.inc");
 /*
 Barcode Render Class for PHP using the GD graphics library 
 Copyright (C) 2001  Karim Mribti

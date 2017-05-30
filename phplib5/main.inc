@@ -33,7 +33,27 @@ class main
 		if ($Action == "")
 			$Action = $FileAction;
 		if ($Action == "")
+		{
 			$Action = ACTION_DEF;
+
+			if (defined("OBJECTS_CHR"))
+				$RequestAction = str_replace(OBJECTS_CHR, "/", ACTION_DEF);
+			else
+				$RequestAction = str_replace("|", "/", ACTION_DEF);
+			$Action = basename($RequestAction);
+			if ($RequestAction != $Action)
+			{
+				$Module = basename(dirname($RequestAction))."/";
+				if (is_dir(OBJECTS_DIR.$Module))
+				{
+					define("MODULES_DIR", $Module);
+					if (defined("OBJECTS_CHR"))
+						define("MODULES_NAME", str_replace("/", OBJECTS_CHR, $Module));
+					else
+						define("MODULES_NAME", str_replace("/", "|", $Module));
+				}
+			}
+		}
 
 		if ($Action == "page_cache")
 			main::buffer_show($_REQUEST["Page"], $_REQUEST["Owner"]);
@@ -50,15 +70,10 @@ class main
 		}
 
 		if (is_file($Include))
-		{
 			require_once($Include);
-		}
 		else
-		{
-			$Error = "File not found $Include";
 			exit($Error);
 			//exit($Error.' '.$Include);
-		}
 
 		define("CURRENT_ACTION", $Action);
 		$Main = new $Action;
@@ -90,19 +105,31 @@ class main
 		{
 			$URL = $Action.".".$EXT;
 			$Join = "?";
-			foreach ($Values as $Key => $Val)
-			{
-				$URL .= $Join.$Key."=".urlencode($Val);
-				$Join = "&";
-			}
+			$URL = self::build_url_string($URL, $Values, $Join);
 		}
 		else
 		{
-			$URL = $Start;
-			foreach ($Values as $Key => $Val)
-				$URL .= "&".$Key."=".urlencode($Val);
+			$URL = self::build_url_string($Start, $Values);
 		}
 		return ($URL);
+	}
+
+	public static function build_url_string($URL, $Parameters, $Join="&")
+	{
+		foreach ($Parameters as $Key => $Val)
+		{
+			if(is_array($Val) && count($Val))
+			{
+				foreach($Val as $K=>$V)
+					$URL .= $Join . $Key."[" . $K . "]=".urlencode($V);
+			}
+			else
+				$URL .= $Join .$Key."=".urlencode($Val);
+
+			$Join = "&";
+		}
+
+		return $URL;
 	}
 
 	function href($Action, $Content, $Extra = "", $Parameters = "", $Persistent = "", $PHP = 0, $Lookup = 0)

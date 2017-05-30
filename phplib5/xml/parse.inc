@@ -1,5 +1,4 @@
-<?php
-require_once(PHPLIB_DIR."/xml/class.inc");
+<?php require_once(PHPLIB_DIR."/xml/class.inc");
 
 // parse.inc
 //

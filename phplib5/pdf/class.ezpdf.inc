@@ -490,39 +490,122 @@ function ezSetDy($dy,$mod=''){
 
 // ------------------------------------------------------------------------------
 
-function ezPrvtTableDrawLines($pos,$gap,$x0,$x1,$y0,$y1,$y2,$col,$inner,$outer,$opt=1){
-  $x0=1000;
-  $x1=0;
-  $this->setStrokeColor($col[0],$col[1],$col[2]);
-  $cnt=0;
-  $n = count($pos);
-  foreach($pos as $x){
-    $cnt++;
-    if ($cnt==1 || $cnt==$n){
-      $this->setLineStyle($outer);
-    } else {
-      $this->setLineStyle($inner);
-    }
-    $this->line($x-$gap/2,$y0,$x-$gap/2,$y2);
-    if ($x>$x1){ $x1=$x; };
-    if ($x<$x0){ $x0=$x; };
-  }
-  $this->setLineStyle($outer);
-  $this->line($x0-$gap/2-$outer/2,$y0,$x1-$gap/2+$outer/2,$y0);
-  // only do the second line if it is different to the first, AND each row does not have
-  // a line on it.
-  if ($y0!=$y1 && $opt<2){
-    $this->line($x0-$gap/2,$y1,$x1-$gap/2,$y1);
-  }
-  $this->line($x0-$gap/2-$outer/2,$y2,$x1-$gap/2+$outer/2,$y2);
+function ezPrvtTableDrawLines($pos,$gap,$x0,$x1,$y0,$y1,$y2,$col,$inner,$outer,$opt,$round,$shade)
+{
+	$x0=1000;
+	$x1=0;
+	$this->setStrokeColor($col[0],$col[1],$col[2]);
+	$cnt=0;
+	$n = count($pos);
+	foreach($pos as $code => $x)
+	{
+		if ($x>$x1)
+			$x1=$x; 
+		if ($x<$x0)
+			$x0=$x; 
+	}
+	$Left = $x0-$gap/2-$outer/2;
+	$Right = $x1-$gap/2+$outer/2;
+	$Top = $y0;
+	$Bottom = $y2;
+	if ($round)
+	{
+		$this->setColor($shade[0], $shade[1], $shade[2], 1);
+		$this->filledRectangle(($Left - $round) + 1, $Bottom, $round, ($Top - $Bottom));
+		$this->filledRectangle($Right - 1, $Bottom, $round, ($Top - $Bottom));
+	}
+
+	$x0=1000;
+	$x1=0;
+	foreach($pos as $code => $x)
+	{
+		$cnt++;
+		if ($cnt==1 || $cnt==$n)
+		{
+			$this->setLineStyle($outer);
+		}
+		else
+		{
+			$this->setLineStyle($inner);
+		}
+
+		switch ($opt) // <3)
+		{
+			case 1:
+			case 2:
+				$this->line($x-$gap/2,$y0,$x-$gap/2,$y2); // TABLE VERTICAL INNER AND OUTER
+				break;
+			case 3:
+				if ($cnt==1 || $cnt==$n)
+					$this->line($x-$gap/2,$y0,$x-$gap/2,$y2); // TABLE VERTICAL OUTER ONLY
+				break;
+			case 4:
+				if (!($cnt==1 || $cnt==$n))
+					$this->line($x-$gap/2,$y0,$x-$gap/2,$y2); // TABLE VERTICAL INNER ONLY
+				break;
+		}
+		if ($x>$x1)
+		{
+			$x1=$x; 
+		}
+		if ($x<$x0)
+		{
+			$x0=$x; 
+		}
+	}
+
+	$this->setLineStyle($outer);
+	if ($opt && ($opt < 4))
+		$this->line($x0-$gap/2-$outer/2,$y0,$x1-$gap/2+$outer/2,$y0); // TABLE TOP
+	// only do the second line if it is different to the first, AND each row does not have
+	// a line on it.
+//	if ($y0!=$y1 && $opt<2)
+//	{
+//		$this->line($x0-$gap/2,$y1,$x1-$gap/2,$y1); // TABLE I HAVE NO IDEA WHAT THIS LINE IS FOR AND IT NEVER SEEMS TO DO ANYTHING
+//	}
+	if ($opt && ($opt < 4))
+		$this->line($x0-$gap/2-$outer/2,$y2,$x1-$gap/2+$outer/2,$y2); // TABLE BOTTOM
+
+// $this->MarkCorner($Left, $Top); // TL
+// $this->MarkCorner($Right, $Top); // TR
+// $this->MarkCorner($Left, $Bottom); // BL
+// $this->MarkCorner($Right, $Bottom); // BR
+}
+
+function MarkCorner($X, $Y)
+{
+$CacheLineStyle   = $this->currentLineStyle;
+$CacheStrokeColor = $this->currentStrokeColour;
+$this->setLineStyle(0.5);
+$this->setStrokeColor(0, 0, 0);
+$S = $this->mm(2.5);
+$this->line($X - $S, $Y - $S, $X + $S, $Y + $S);
+$this->line($X - $S, $Y + $S, $X + $S, $Y - $S);
+$this->setStrokeColor($CacheStrokeColor["r"], $CacheStrokeColor["g"], $CacheStrokeColor["b"]);
+$this->currentLineStyle = $CacheLineStyle;
+$this->objects[$this->currentContents]['c'].="\n".$CacheLineStyle;
 }
 
 // ------------------------------------------------------------------------------
 
-function ezPrvtTableColumnHeadings($cols,$pos,$maxWidth,$height,$decender,$gap,$size,&$y,$optionsAll=array()){
+function ezPrvtTableColumnHeadings($cols,$pos,$maxWidth,$height,$decender,$gap,$size,&$y,$optionsAll=array(),$next=0){
   // uses ezText to add the text, and returns the height taken by the largest heading
   // this page will move the headings to a new page if they will not fit completely on this one
   // transaction support will be used to implement this
+
+	if (is_array($optionsAll["headCol"]))
+	{
+		$cache = $this->currentColour;
+		$this->setColor($optionsAll["headCol"][0], $optionsAll["headCol"][1], $optionsAll["headCol"][2], 1);
+		$D = ($height + $optionsAll["colGap"] + $optionsAll["colGap"] - ($decender * 2));
+		if ($next)
+			$H = $D + $decender;
+		else
+			$H = $D;
+		$this->filledRectangle(($pos["Col0"] - $optionsAll["colGap"]), ($y - $D), ($pos["_end_"] - $pos["Col0"]), ($H));
+		$this->setColor($cache["r"], $cache["g"], $cache["b"], 1);
+	}
+
 
   if (isset($optionsAll['cols'])){
     $options = $optionsAll['cols'];
@@ -598,6 +681,36 @@ function ezPrvtGetTextWidth($size,$text){
 }
 
 // ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 
 function ezTable(&$data,$cols='',$title='',$options=''){
   // add a table of information to the pdf document
@@ -653,7 +766,7 @@ function ezTable(&$data,$cols='',$title='',$options=''){
       $cols[$k1]=$k1;
     }
   }
-  
+
   if (!is_array($options)){
     $options=array();
   }
@@ -663,6 +776,7 @@ function ezTable(&$data,$cols='',$title='',$options=''){
     ,'titleGap'=>5,'lineCol'=>array(0,0,0),'gap'=>5,'xPos'=>'centre','xOrientation'=>'centre'
     ,'showHeadings'=>1,'textCol'=>array(0,0,0),'width'=>0,'maxWidth'=>0,'cols'=>array(),'minRowSpace'=>-100,'rowGap'=>2,'colGap'=>5
     ,'innerLineThickness'=>1,'outerLineThickness'=>1,'splitRows'=>0,'protectRows'=>1
+    ,'rounding'=>0,'roundingColor'=>array(0.9, 0.9, 0.9),'headCol'=>""
     );
 
   foreach($defaults as $key=>$value){
@@ -687,7 +801,16 @@ function ezTable(&$data,$cols='',$title='',$options=''){
   // find the maximum cell widths based on the data
   foreach($data as $row){
     foreach($cols as $colName=>$colHeading){
-      $w = $this->ezPrvtGetTextWidth($options['fontSize'],(string)$row[$colName])*1.01;
+      if (isset($options['fontSize']))
+        $f = $options['fontSize'];
+      else
+        $f = "";
+      if (isset($row[$colName]))
+        $t = isset($row[$colName]);
+      else
+        $t = "";
+      $w = $this->ezPrvtGetTextWidth($f,(string)$t)*1.01;
+//      $w = $this->ezPrvtGetTextWidth($options['fontSize'],(string)$row[$colName])*1.01;
       if ($w > $maxWidth[$colName]){
         $maxWidth[$colName]=$w;
       }
@@ -874,7 +997,7 @@ function ezTable(&$data,$cols='',$title='',$options=''){
     $w = $this->getTextWidth($options['titleFontSize'],$title);
     $this->y -= $this->getFontHeight($options['titleFontSize']);
     if ($this->y < $this->ez['bottomMargin']){
-      $this->ezNewPage();
+      $this->ezNewPage(); // TABLE PAGE NEW
       $this->y -= $this->getFontHeight($options['titleFontSize']);
     }
     $this->addText($middle-$w/2,$this->y,$options['titleFontSize'],$title);
@@ -882,6 +1005,19 @@ function ezTable(&$data,$cols='',$title='',$options=''){
   }
 
   $y=$this->y; // to simplify the code a bit
+  $topRounded = 0;
+  if ($options['rounding'])
+  {
+    $y = $y - $options['rounding'];
+    $this->setColor($options['roundingColor'][0], $options['roundingColor'][1], $options['roundingColor'][2]);
+    $this->filledRectangle($x0 - 1, $y - 2, ($x1 - $x0 - 1), $options['rounding']);
+    $this->setStrokeColor($options['roundingColor'][0], $options['roundingColor'][1], $options['roundingColor'][2]);
+    $this->setLineStyle(($options['rounding'] * 1) - 0);
+    $this->partEllipse($x0 - 0, $y - 3, 90, 180, ($options['rounding'] / 2) + 1);
+    $this->partEllipse($x1 - 3, $y - 3, 0, 90, ($options['rounding'] / 2) + 1);
+    $topRounded = 1;
+  }
+
   
   // make the table
   $height = $this->getFontHeight($options['fontSize']);
@@ -913,8 +1049,8 @@ function ezTable(&$data,$cols='',$title='',$options=''){
   $newPage=0;
 
 // For tracking if we need to reset colors
-  $COLOR_ARRAY_SENT=0;
-  foreach($data as $row){
+  $COLOR_ARRAY_SENT=1;
+  foreach($data as $d => $row){
     $cnt++;
     // the transaction support will be used to prevent rows being split
     if ($options['splitRows']==0){
@@ -932,7 +1068,7 @@ function ezTable(&$data,$cols='',$title='',$options=''){
     $mx=0;
     $newRow=1;
     while(!$abortTable && ($newPage || $newRow)){
-      
+     
       $y-=$height;
       if ($newPage || $y<$this->ez['bottomMargin'] || (isset($options['minRowSpace']) && $y<($this->ez['bottomMargin']+$options['minRowSpace'])) ){
         // check that enough rows are with the heading
@@ -943,18 +1079,13 @@ function ezTable(&$data,$cols='',$title='',$options=''){
         }
       
         $y2=$y-$mx+2*$height+$decender-$newRow*$height;
-        if ($options['showLines']){
           if (!$options['showHeadings']){
             $y0=$y1;
           }
-          $this->ezPrvtTableDrawLines($pos,$options['gap'],$x0,$x1,$y0,$y1,$y2,$options['lineCol'],$options['innerLineThickness'],$options['outerLineThickness'],$options['showLines']);
-        }
-//        if ($options['shaded']){
-// GDTAG - Always expect cell highlighting or shading now
+          $this->ezPrvtTableDrawLines($pos,$options['gap'],$x0,$x1,$y0,$y1,$y2,$options['lineCol'],$options['innerLineThickness'],$options['outerLineThickness'],$options['showLines'],$options['rounding'],$options['roundingColor']); // TABLE LAST
           $this->closeObject();
           $this->restoreState();
-//        }
-        $this->ezNewPage();
+        $this->ezNewPage(); // TABLE PAGE NEW
         // and the margins may have changed
         $dm = $this->ez['leftMargin']-$baseLeftMargin;
         foreach($basePos as $k=>$v){
@@ -963,20 +1094,17 @@ function ezTable(&$data,$cols='',$title='',$options=''){
         $x0=$x0+$dm;
         $x1=$x1+$dm;
   
-//        if ($options['shaded']){
-// GDTAG - Always expect cell highlighting or shading now
           $this->saveState();
           $textObjectId = $this->openObject();
           $this->closeObject();
           $this->addObject($textObjectId);
           $this->reopenObject($textObjectId);
-//        }
         $this->setColor($options['textCol'][0],$options['textCol'][1],$options['textCol'][2],1);
         $y = $this->ez['pageHeight']-$this->ez['topMargin'];
         $y0=$y+$decender;
         $mx=0;
         if ($options['showHeadings']){
-          $this->ezPrvtTableColumnHeadings($cols,$pos,$maxWidth,$height,$decender,$options['rowGap'],$options['fontSize'],$y,$options);
+          $this->ezPrvtTableColumnHeadings($cols,$pos,$maxWidth,$height,$decender,$options['rowGap'],$options['fontSize'],$y,$options, 1);
           $y1=$y;
         } else {
           $y1=$y0;
@@ -1038,10 +1166,16 @@ function ezTable(&$data,$cols='',$title='',$options=''){
                 $just='left';
               }
 
-//GDTAG
+//GDTAG MUZ
                  $Cell = substr($colName,3);
-                 $TextColor = $row["TextColor".$Cell];
-                 $ShadeColor = $row["ShadeColor".$Cell];
+                 if (isset($row["TextColor".$Cell]))
+	           $TextColor = $row["TextColor".$Cell];
+                 else
+                   $TextColor = "";
+                 if (isset($row["ShadeColor".$Cell]))
+       	           $ShadeColor = $row["ShadeColor".$Cell];
+                 else
+                   $ShadeColor = "";
                  if(count($TextColor) && is_array($TextColor))
                  {
                    $COLOR_ARRAY_SENT=1;
@@ -1083,8 +1217,6 @@ function ezTable(&$data,$cols='',$title='',$options=''){
                  {
                    $RowColShading[] = array("x"=> $pos[$colName]-$options['gap']/2, "y"=>$y+$decender+$height, "width"=> $ColumnWidth, "color"=>array("r"=>$options['shadeCol2'][0], "g"=>$options['shadeCol2'][1], "b"=>$options['shadeCol2'][2]));
                  }
-
-
                  $line=$this->addTextWrap($pos[$colName],$this->y,$maxWidth[$colName],$options['fontSize'],$line,$just,0,0, $TextColor, $ShadeColor);
             }
           }
@@ -1104,43 +1236,31 @@ function ezTable(&$data,$cols='',$title='',$options=''){
         $this->filledRectangle($ShadingDetails["x"], $ShadingDetails["y"]-$mx, $ShadingDetails["width"], $mx);
         $this->reopenObject($textObjectId);
       }
-// Reset array
       $RowColShading = array();
 
       // set $row to $leftOvers so that they will be processed onto the new page
       $row = $leftOvers;
-/*
-      // now add the shading underneath
-      if ($options['shaded'] && $cnt%2==0){
-        $this->closeObject();
-        $this->setColor($options['shadeCol'][0],$options['shadeCol'][1],$options['shadeCol'][2],1);
-        $this->filledRectangle($x0-$options['gap']/2,$y+$decender+$height-$mx,$x1-$x0,$mx);
-        $this->reopenObject($textObjectId);
-      }
 
-      if ($options['shaded']==2 && $cnt%2==1){
-        $this->closeObject();
-        $this->setColor($options['shadeCol2'][0],$options['shadeCol2'][1],$options['shadeCol2'][2],1);
-        $this->filledRectangle($x0-$options['gap']/2,$y+$decender+$height-$mx,$x1-$x0,$mx);
-        $this->reopenObject($textObjectId);
-      }
-*/
-
-      if ($options['showLines']>1){
+      if (in_array($options['showLines'], array(2, 3, 4))){
         // then draw a line on the top of each block
-//        $this->closeObject();
         $this->saveState();
         $this->setStrokeColor($options['lineCol'][0],$options['lineCol'][1],$options['lineCol'][2],1);
-//        $this->line($x0-$options['gap']/2,$y+$decender+$height-$mx,$x1-$x0,$mx);
         if ($firstLine){
           $this->setLineStyle($options['outerLineThickness']);
           $firstLine=0;
         } else {
           $this->setLineStyle($options['innerLineThickness']);
         }
-        $this->line($x0-$options['gap']/2,$y+$decender+$height,$x1-$options['gap']/2,$y+$decender+$height);
+	if (
+in_array($options["showLines"], array(1, 2, 3))
+||
+(($options["showLines"] == 4) && $d)
+
+)
+{
+	$this->line($x0-$options['gap']/2,$y+$decender+$height,$x1-$options['gap']/2,$y+$decender+$height); // TABLE HORIZONTAL
+}
         $this->restoreState();
-//        $this->reopenObject($textObjectId);
       }
     } // end of while 
     $y=$y-$mx+$height;
@@ -1184,22 +1304,67 @@ function ezTable(&$data,$cols='',$title='',$options=''){
   $this->transaction('commit');
   
   $y2=$y+$decender;
-  if ($options['showLines']){
+//  if ($options['showLines']){
     if (!$options['showHeadings']){
       $y0=$y1;
     }
-    $this->ezPrvtTableDrawLines($pos,$options['gap'],$x0,$x1,$y0,$y1,$y2,$options['lineCol'],$options['innerLineThickness'],$options['outerLineThickness'],$options['showLines']);
-  }
+    $this->ezPrvtTableDrawLines($pos,$options['gap'],$x0,$x1,$y0,$y1,$y2,$options['lineCol'],$options['innerLineThickness'],$options['outerLineThickness'],$options['showLines'],$options['rounding'],$options['roundingColor']); // TABLE FIRST + MID
+//  }
 
   // close the object for drawing the text on top
 //  if ($options['shaded']){
     $this->closeObject();
     $this->restoreState();
 //  }
+
+    if ($options['rounding'])
+    {
+      $y = $y - $options['rounding'] + 1;
+      $this->setColor($options['roundingColor'][0], $options['roundingColor'][1], $options['roundingColor'][2]);
+      $this->filledRectangle($x0 - 1, $y - 2, ($x1 - $x0 - 1), $options['rounding']);
+      $this->setStrokeColor($options['roundingColor'][0], $options['roundingColor'][1], $options['roundingColor'][2]);
+      $this->setLineStyle(($options['rounding'] * 1) - 0);
+      $this->partEllipse($x0 - 0, $y + $options['rounding'] - 1, 180, 270, ($options['rounding'] / 2) + 1);
+      $this->partEllipse($x1 - 3, $y + $options['rounding'] - 1, 270, 360, ($options['rounding'] / 2) + 1);
+    }
   
   $this->y=$y;
   return $y;
 }
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 
 // ------------------------------------------------------------------------------
 function ezProcessText($text){

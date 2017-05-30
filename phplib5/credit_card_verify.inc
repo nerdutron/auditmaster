@@ -72,8 +72,6 @@ class credit_card_verify
 			$Errors[] = "ERROR - Credit Card has Expired.";
 		elseif($CardY < date("y"))
 			$Errors[] = "ERROR - Credit Card has Expired.";
-		elseif($CardY > (date("y") + 10))
-			$Errors[] = "ERROR - Please provide a valid Expiry Date.";
 
 		return($Errors);
 	}
@@ -149,16 +147,19 @@ class credit_card_verify
 			return(array());
 	}
 
-	public function CompleteCheck($CardName, $CardNumber, $CardType, $CardExpiry)
+	public function CompleteCheck($CardName, $CardNumber, $CardType, $CardExpiry, $IgnoreNumber = 0)
 	{
 		$Errors = array();
 
-		// Credit Card Type Validation
-		$Errors = array_merge($Errors, credit_card_verify::CheckType($CardType, $CardNumber));
+		if (!$IgnoreNumber)
+		{
+			// Credit Card Type Validation
+			$Errors = array_merge($Errors, credit_card_verify::CheckType($CardType, $CardNumber));
 
-		// Use Check Digits on the Card Number
-		if (!sizeof($Errors))
-			$Errors = array_merge($Errors, credit_card_verify::CheckDigits($CardNumber));
+			// Use Check Digits on the Card Number
+			if (!sizeof($Errors))
+				$Errors = array_merge($Errors, credit_card_verify::CheckDigits($CardNumber));
+		}
 
 		// Credit Card Name validation
 		$Errors = array_merge($Errors, credit_card_verify::CheckName($CardName));

@@ -229,17 +229,22 @@ class MailQ
 
 	function Process()
 	{
+		$Query = "SELECT value FROM mail_q_config WHERE config = 'UPLOAD_RATE_BYTES' ";
+		$UploadRate = DBGet(MAIL_Q_DB, $Query);
+		if ($UploadRate)
+			$UploadRate = ($UploadRate / 10);
+
 		$Config = array();
 		$Config["restart_maximum"] = 5;
 		$Config["load_sensitivity"] = 3;
 		$Config["every"] = 5;
 		$Config["delay"] = 1;
 		$Config["timeout"] = 1800;
-		$Config["description"] = "NOTIFICATION";
-		$Config["email"] = "murray@mu.com.au";
-		$Config["pager"] = "0418736298@mu.com.au";
+		$Config["description"] = "MailQ on ".ENV;
+		$Config["email"] = "support@shields.id.au";
+//		$Config["pager"] = "0418736298@mu.com.au";
 
-		$SC = new Script(MAIL_Q_DB, "MailQ", $Config);
+		$SC = new Script(MAIL_Q_DB, "MailQ_".ENV, $Config);
 		$SC->Open();
 
 		$Incomplete = 1;
@@ -253,10 +258,20 @@ class MailQ
 			$Q = new DBQuery;
 			$Q->RunOne(MAIL_Q_DB, $Query);
 			if ($Q->NumRows())
-				MailQ::DeliverFromQ($Q->GetField("request_id"));
+				$AttachmentsSize = MailQ::DeliverFromQ($Q->GetField("request_id"));
 			else
+			{
+				$AttachmentsSize = 0;
 				$Incomplete = 0;
+			}
 			$Q->EndQuery();
+
+			if ($UploadRate * $AttachmentsSize)
+			{
+				$Seconds = ceil($AttachmentsSize / $UploadRate);
+				$Seconds += 2;
+				sleep($Seconds);
+			}
 
 			$SC->Increment();
 
@@ -278,7 +293,6 @@ class MailQ
 	function DeliverFromQ($RequestID)
 	{
 		$INQ = new DBInsert;
-		$Return = 0;
 
 		$Query = "select * from mail_q_requests where request_id = ".$RequestID;
 		$R = new DBQuery;
@@ -318,12 +332,13 @@ class MailQ
 						break;
 				}
 			}
+
 			if ($TO)
 				$M->to = $TO;
 			if (!empty($CC))
-				$M->headers = "Cc: ".$CC;
+				$M->headers .= "Cc: ".$CC."\n";
 			if (!empty($BCC))
-				$M->headers = "Bcc: ".$BCC;
+				$M->headers .= "Bcc: ".$BCC."\n";
 
 			$Z = new ZIP;
 			$Query = "select * from mail_q_documents where request_id = ".$RequestID;
@@ -360,11 +375,9 @@ class MailQ
 			$INQ->Save("delivered_size", $AttachmentsSize);
 			$INQ->Run(MAIL_Q_DB, "mail_q_requests", "UPDATE");
 			$INQ->EndQuery();
-
-			$Return = 1;
 		}
 
-		return ($Return);
+		return ($AttachmentsSize);
 	}
 
 	function Status()

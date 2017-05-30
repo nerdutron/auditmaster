@@ -1,5 +1,4 @@
-<?php
-
+<?php 
 /* create definitions */
 $CSSMenu = array();
 

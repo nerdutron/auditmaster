@@ -10,7 +10,6 @@
 // Modification History
 // --------------------
 // Murray Shields	28/4/2004
-// Attachments can now be embedded INSIDE emails
 //
 // Rod Cole	31/10/2003
 // Added in Content-Disposition section to functoin build_message
@@ -31,44 +30,31 @@ class Mail
 //
 // void mime_mail()
 // class constructor
-//        
+//
 	function __construct()
 	{
 		$this->parts = array();
 		$this->to = "";
 		$this->from = "";
 		$this->subject = "";
+		$this->content = "";
 		$this->body = "";
+		$this->mime = "";
 		$this->headers = "";
 		$this->parameters = "";
-		$this->embedded = 0;
 	}
 
 //
 // void add_attachment(string message, [string name], [string ctype])
 // Add an attachment to the mail object
 //
-	function add_attachment($message, $name = "", $ctype = "application/octet-stream", $embedded = 0)
+	function add_attachment($message, $name = "", $ctype = "application/octet-stream")
 	{
-		if ($embedded)
-		{
-			$pictureID = uniqid(time());
-			$this->embedded++;
-		}
-		else
-			$pictureID = "";
-
 		$this->parts[] = array (
 			"ctype" => $ctype,
 			"message" => $message,
-			"pictureID" => $pictureID,
 			"name" => $name
 			);
-
-		if ($pictureID)
-			return ("<img src=\"cid:".$pictureID."\">");
-		else
-			return ("");
 	}
 
 //
@@ -84,9 +70,7 @@ class Mail
 			$ReturnStr .= "; name=\"".$Part["name"]."\"";
 		$ReturnStr .= "\nContent-Transfer-Encoding: base64";
 
-		if($Part["pictureID"])
-			$ReturnStr .= "\nContent-ID: <".$Part["pictureID"].">";
-		elseif($Part["name"])
+		if($Part["name"])
 			$ReturnStr .= "\nContent-Disposition: inline; filename=\"".$Part["name"]."\"";
 
 		$ReturnStr .= "\n\n$message\n";
@@ -94,28 +78,43 @@ class Mail
 	}
 
 //
-//      void build_multipart()
-//      Build a multipart mail
+// void build_multipart()
+// Build a multipart mail
 //
 	function build_multipart() 
 	{
 		$boundary = "b".md5(uniqid(time()));
-		if ($this->embedded)
-			$multipart = "Content-Type: multipart/related; boundary=\"$boundary\"\n\n";
-		else
-			$multipart = "Content-Type: multipart/mixed; boundary=\"$boundary\"\n\n";
-		$multipart .= "This is a MIME encoded message.\n\n--$boundary";
+		$this->mime .= "Content-Type: multipart/mixed; boundary=\"$boundary\"\n\n";
+		$this->content .= "--$boundary";
 
 		for($i = sizeof($this->parts)-1; $i >= 0; $i--) 
-			$multipart .= "\n".$this->build_message($this->parts[$i])."--$boundary";
-		$multipart .= "--\n";
-		return $multipart;
+			$this->content .= "\n".$this->build_message($this->parts[$i])."--$boundary";
+		$this->content .= "--\n";
+	}
+
+	function extract_header($Type)
+	{
+		$Found = "";
+		if (strstr($this->mime, $Type))
+		{
+			$New = array();
+			foreach (explode("\n", $this->mime) as $Line)
+			{
+				if (strstr($Line, $Type))
+					$Found = $Line;
+				else
+					$New[] = $Line;
+			}
+		}
+		$this->mime = implode("\n", $New);
+		return($Found);
 	}
 
 //
 // void send()
 // Send the mail (last class-function to be called)
 //
+
 	function send() 
 	{
 		if (defined("MAIL_TO_DIR"))
@@ -135,9 +134,9 @@ class Mail
 				closedir($D);
 				sort($FileID);
 				if (sizeof($FileID))
-					$ID = str_pad((array_pop($FileID) + 1), 3, "0", STR_PAD_LEFT);
+					$ID = str_pad((array_pop($FileID) + 1), 6, "0", STR_PAD_LEFT);
 				else
-					$ID = "000";
+					$ID = "000000";
 
 				$Path = MAIL_TO_DIR."MAIL_".$ID."_";
 				file_put_contents($Path."message_".str_replace(array("/", " "), array("-", "_"), $this->subject).".htm", nl2br($this->body));
@@ -147,26 +146,124 @@ class Mail
 			}
 		}
 
-		$mime = "";
 		if (!empty($this->from))
-			$mime .= "From: ".$this->from."\n";
+			$this->mime .= "From: ".$this->from."\n";
 		if (!empty($this->headers))
-			$mime .= $this->headers."\n";
-		    
+			$this->mime .= $this->headers;
+
+		if (defined("MAIL_TO_FORCE"))
+		{
+			$CC  = $this->extract_header("Cc:");
+			$BCC = $this->extract_header("Bcc:");
+			$this->body = trim("Intended Recipients: ".$this->to." ".$CC." ".$BCC)."\n\n".$this->body;
+
+			$ToAddresses = array();
+			foreach (explode(" ", trim($this->to)) as $E)
+				if (strstr($E, "@"))
+					$ToAddresses[] = $E;
+			$this->to = "";
+			foreach (explode(" ", trim($CC)) as $E)
+				if (strstr($E, "@"))
+					$ToAddresses[] = $E;
+			foreach (explode(" ", trim($BCC)) as $E)
+				if (strstr($E, "@"))
+					$ToAddresses[] = $E;
+			if (defined("MAIL_TO_DOMAIN") && MAIL_TO_DOMAIN)
+			{
+				$Domains = explode("|", MAIL_TO_DOMAIN);
+				foreach ($ToAddresses as $Address)
+				{
+					foreach ($Domains as $Domain)
+					if (stristr($Address, $Domain))
+					{
+						if ($this->to)
+							$this->to .= " ";
+						$this->to .= $Address;
+					}
+				}
+			}
+
+			if ($this->to == "")
+				$this->to = MAIL_TO_FORCE;
+		}
+
+		$FileCount = sizeof($this->parts); 
 		if (!empty($this->body))
-			$this->add_attachment(nl2br($this->body), "", "text/html; charset=\"ISO-8859-1\"");   
+			$this->add_attachment(nl2br($this->body), "", "text/html; charset=\"UTF-8\"");
+		//	$this->add_attachment(nl2br($this->body), "", "text/html; charset=\"ISO-8859-1\"");
 
-		$mime .= "MIME-Version: 1.0\n".$this->build_multipart();
+		$this->mime .= "MIME-Version: 1.0\n";
+		$this->build_multipart();
 
-		mail($this->to, $this->subject, "", $mime, $this->parameters);
+		if (!strstr($this->from, "creditworks.com.au"))
+		{
+			$Found = "";
+			foreach(debug_backtrace() as $Trace)
+			{
+				if (!$Found)
+				{
+					if (!strstr($Trace["file"], "phplib"))
+					{
+						$Found .= date("H:i:s");
+						$Found .= " File: ";
+						$Found .= $Trace["file"];
+						$Found .= " Line: ";
+						$Found .= $Trace["line"];
+						$Found .= " Function: ";
+						$Found .= $Trace["function"];
+						$Found .= "()";
+						$Found .= " TO: ";
+						$Found .= $this->from;
+						$Found .= "\n";
+					}
+				}
+			}
+			if ($Found)
+			{
+				$File = "/tmp/mail_from_".get_current_user()."_".date("Y-m-d").".log";
+				$fp = fopen($File, "a");
+				fwrite($fp, $Found);
+				fclose($fp);
+			}
+		}
+
+		$Success = mail($this->to, $this->subject, $this->content, $this->mime, $this->parameters);
+		if (!$Success)
+		{
+			if (defined("MAIL_TO_FAIL"))
+			{
+				$Message = error_get_last();
+				$Error  = "";
+				if (strstr($Message["file"], "mail"))
+				{
+					$Error .= "ERROR:\n\n";
+					$Error .= $Message["message"];
+				}
+				$Error .= "\n\n";
+				$Error .= "TO:\n\n";
+				$Error .= "[".$this->to."]";
+				$Error .= "\n\nSUBJECT:\n\n";
+				$Error .= "[".$this->subject."]";
+				$Error .= "\n\nATTACHED:\n\n";
+				$Error .= sizeof($FileCount);
+				$Error .= "\n\nMIME:\n\n";
+				$Error .= "[".$this->mime."]";
+				$Error .= "\n\nPARAMETERS:\n\n";
+				$Error .= "[".$this->parameters."]";
+				$Error .= "\n\nBODY:\n\n";
+				$Error .= "[".$this->body."]";
+				mail(MAIL_TO_FAIL, "mail() Failure: ".ENV." on ".$_SERVER["HOSTNAME"], $Error);
+			}
+		}
 	}
 
 	function all_replies($email)
 	{
-		$this->parameters = "-f".$this->address_base($email);
-		$email = $this->address_full($email);
+//		$this->parameters = "-f".$this->address_base($email);
+		$this->parameters = "-f".$email;
+//		$email = $this->address_full($email);
 		$this->from = $email;
-		$this->headers = "Reply-To: ".$email;
+		$this->headers .= "Reply-To: ".$email."\n";
 	}
 
 	function address_base($email)
@@ -201,7 +298,7 @@ class Mail
 // $mail = new Mail;
 // $mail->from = "bill@ben.com";
 // $mail->headers = "Reply-To: bill@ben.com";
-// $mail->parameters = "-fbill@ben.com";
+//// $mail->parameters = "-fbill@ben.com";
 // $mail->to = "bar@foo.com";
 // $mail->subject = "Testing...";
 // $mail->body = "This is just a test.";

@@ -384,9 +384,18 @@ function ShowTSV($Data)
 function ParseDateString($String)
 {
 	$Parts = explode("/", $String);
-	$D = $Parts[0] * 1;
-	$M = $Parts[1] * 1;
-	$Y = $Parts[2] * 1;
+	$D = $Parts[0];
+	$M = $Parts[1];
+	$Y = $Parts[2];
+	$Numeric = 0;
+	if (is_numeric($D))
+		$Numeric++;
+	if (is_numeric($M))
+		$Numeric++;
+	if (is_numeric($Y))
+		$Numeric++;
+	if ($Numeric != 3)
+		return("");
 	if ($Y < 100)
 	{
 		$Current = date("y") + 5;
@@ -415,7 +424,7 @@ function DeliverInline(&$Data, $MIME)
 
 function DeliverDownloadHeaders($Filename, $Length)
 {
-	Header("Content-Disposition: attachment; filename=".$Filename);
+	Header("Content-Disposition: attachment; filename=\"".$Filename."\"");
 	Header("Content-Length: ".$Length);
 }
 

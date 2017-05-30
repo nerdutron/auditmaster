@@ -36,7 +36,7 @@
 //		$TabSet is an array of Tabs.  Each Tab array is as follows:
 //
 //			$Tab["Label"] = LabelString
-//			$Tab["Select"] = Y|N
+//			$Tab["Selected"] = Y|N
 //
 //		The Label string may contain anything though mnore often than
 //		not it will contain a URL string for switching to that tab

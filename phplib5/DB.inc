@@ -1,4 +1,4 @@
-<?
+<?php 
 ////////////////////////////////////////////////////////////////////////
 //                                                                    //
 // DB.inc - a replacement for Pear DB in respect of its use in        //
@@ -56,7 +56,7 @@ class DB
 
 		DB::getDBDetails($DBName, &$DBType, &$DBUser, &$DBPassword, &$DBDatabase);
 
-		if($DBType == "mysql"))
+		if($DBType == "mysql")
 		{
 			$DB = new DBMysql;
 
@@ -152,7 +152,7 @@ class DBMySQL extends DBCommon
 		else
 		{
 			$this->DBResult = $Result;
-			return(&$this->DBResult);
+			return($this->DBResult);
 		}
 	}
 

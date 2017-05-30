@@ -93,7 +93,8 @@ class email_validation_class
 			$this->preg=(function_exists("preg_match") ? "/".str_replace("/", "\\/", $this->email_regular_expression)."/" : "");
 			return($this->ValidateEmailAddress($email));
 		}
-		return(eregi($this->email_regular_expression,$email)!=0);
+//		return(eregi($this->email_regular_expression,$email)!=0);
+		return(preg_match($this->email_regular_expression,$email)!=0);
 	}
 
 	Function ValidateEmailHost($email,&$hosts)
@@ -152,7 +153,8 @@ class email_validation_class
 		for($host=0;$host<count($hosts);$host++)
 		{
 			$domain=$hosts[$host];
-			if(ereg('^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$',$domain))
+//			if(ereg('^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$',$domain))
+			if(preg_match('^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$^',$domain))
 				$ip=$domain;
 			else
 			{

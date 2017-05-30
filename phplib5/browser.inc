@@ -198,36 +198,52 @@ class Browser
 function BrowserCheckOS($OS)
 {
 	GLOBAL $BROWSER_CLASS;
-	if (strtolower(get_class($BROWSER_CLASS)) != "browser")
+	if (gettype($BROWSER_CLASS) == "object")
+	{
+		if (strtolower(get_class($BROWSER_CLASS)) != "browser")
+			$BROWSER_CLASS = new Browser;
+	}
+	else
 		$BROWSER_CLASS = new Browser;
-
 	return ($BROWSER_CLASS->CheckOS($OS));
 }
 
 function BrowserCheck($Browser, $Lower = 0, $Upper = 99)
 {
 	GLOBAL $BROWSER_CLASS;
-	if (strtolower(get_class($BROWSER_CLASS)) != "browser")
+	if (gettype($BROWSER_CLASS) == "object")
+	{
+		if (strtolower(get_class($BROWSER_CLASS)) != "browser")
+			$BROWSER_CLASS = new Browser;
+	}
+	else
 		$BROWSER_CLASS = new Browser;
-
 	return ($BROWSER_CLASS->CheckBrowser($Browser, $Lower, $Upper));
 }
 
 function BrowserSmartCheck($String)
 {
 	GLOBAL $BROWSER_CLASS;
-	if (strtolower(get_class($BROWSER_CLASS)) != "browser")
+	if (gettype($BROWSER_CLASS) == "object")
+	{
+		if (strtolower(get_class($BROWSER_CLASS)) != "browser")
+			$BROWSER_CLASS = new Browser;
+	}
+	else
 		$BROWSER_CLASS = new Browser;
-
 	return ($BROWSER_CLASS->SmartCheck($String));
 }
 
 function ShowBrowserName()
 {
 	GLOBAL $BROWSER_CLASS;
-	if (strtolower(get_class($BROWSER_CLASS)) != "browser")
+	if (gettype($BROWSER_CLASS) == "object")
+	{
+		if (strtolower(get_class($BROWSER_CLASS)) != "browser")
+			$BROWSER_CLASS = new Browser;
+	}
+	else
 		$BROWSER_CLASS = new Browser;
-
 	return ($BROWSER_CLASS->Name());
 }
 

@@ -1,5 +1,4 @@
-<?php
-/**
+<?php /**
 * Cpdf
 *
 * http://www.ros.co.nz/pdf
@@ -1511,10 +1510,10 @@ function selectFont($fontName,$encoding='',$set=1){
         // note that pdf supports only binary format type 1 font files, though there is a 
         // simple utility to convert them from pfa to pfb.
         $fp = fopen($fbfile,'rb');
-        $tmp = get_magic_quotes_runtime();
-        set_magic_quotes_runtime(0);
+//        $tmp = get_magic_quotes_runtime();
+//        set_magic_quotes_runtime(0);
         $data = fread($fp,filesize($fbfile));
-        set_magic_quotes_runtime($tmp);
+//        set_magic_quotes_runtime($tmp);
         fclose($fp);
 
         // create the font descriptor
@@ -1844,6 +1843,129 @@ function filledRectangle($x1,$y1,$width,$height){
 function rectangle($x1,$y1,$width,$height){
   $this->objects[$this->currentContents]['c'].="\n".sprintf('%.3f',$x1).' '.sprintf('%.3f',$y1).' '.sprintf('%.3f',$width).' '.sprintf('%.3f',$height).' re S';
 }
+
+
+
+/**
+* rounded rectangles
+*/
+
+	function calculateRoundedCorner($X, $Y, $R, $Mode)
+	{
+		$Corner = array();
+		switch($Mode)
+		{
+			case "TR":
+				$Corner[] = $X - $R;
+				$Corner[] = $Y - $R;
+				$Corner[] = 0;
+				$Corner[] = 90;
+				$Corner[] = $R;
+				break;
+			case "TL":
+				$Corner[] = $X + $R;
+				$Corner[] = $Y - $R;
+				$Corner[] = 90;
+				$Corner[] = 180;
+				$Corner[] = $R;
+				break;
+			case "BL":
+				$Corner[] = $X + $R;
+				$Corner[] = $Y + $R;
+				$Corner[] = 180;
+				$Corner[] = 270;
+				$Corner[] = $R;
+				break;
+			case "BR":
+				$Corner[] = $X - $R;
+				$Corner[] = $Y + $R;
+				$Corner[] = 270;
+				$Corner[] = 360;
+				$Corner[] = $R;
+				break;
+		}
+		return($Corner);
+	}
+
+	function filledRoundedRectangle($X, $Y, $W, $H, $R)
+	{
+		$CacheColor = $this->currentColour;
+		$CacheLineStyle   = $this->currentLineStyle;
+		$CacheStrokeColor = $this->currentStrokeColour;
+
+		$X1 = $X;
+		$Y1 = $Y;
+		$X2 = $X + $W;
+		$Y2 = $Y + $H;
+
+		$X1M = $X1 + $R;
+		$Y1M = $Y1 + $R;
+		$X2M = $X2 - $R;
+		$Y2M = $Y2 - $R;
+
+		$this->filledRectangle($X1, $Y1 + $R, $W, ($H - $R - $R));
+
+		$this->filledRectangle($X1 + $R, $Y1 + $H - $R - 1, ($W - $R - $R), $R + 1);
+
+		$this->filledRectangle($X1 + $R, $Y1, ($W - $R - $R), $R + 1);
+
+		$this->setStrokeColor($CacheColor["r"], $CacheColor["g"], $CacheColor["b"]);
+
+		$C = $R + 1;
+		$this->setLineStyle($C);
+		$this->partEllipse($X1 + $C, $Y1 + $C, 180, 270, ($C / 2)); // TR
+		$this->partEllipse($X1 + $C, $Y2 - $C,  90, 180, ($C / 2)); // TR
+		$this->partEllipse($X2 - $C, $Y1 + $C, 270, 360, ($C / 2)); // TR
+		$this->partEllipse($X2 - $C, $Y2 - $C,   0,  90, ($C / 2)); // TR
+
+		$this->setStrokeColor($CacheStrokeColor["r"], $CacheStrokeColor["g"], $CacheStrokeColor["b"]);
+
+		$this->currentLineStyle = $CacheLineStyle;
+		$this->objects[$this->currentContents]['c'].="\n".$CacheLineStyle;
+	}
+
+	function filledTopRoundedRectangle($X, $Y, $W, $H, $R)
+	{
+		$this->filledRoundedRectangle($X, $Y, $W, $H, $R, "B");
+	}
+
+	function filledBottomRoundedRectangle($X, $Y, $W, $H, $R)
+	{
+		$this->filledRoundedRectangle($X, $Y, $W, $H, $R, "T");
+	}
+
+	function roundedRectangle($X, $Y, $W, $H, $R)
+	{
+		$X1 = $X;
+		$Y1 = $Y;
+		$X2 = $X + $W;
+		$Y2 = $Y + $H;
+
+		$this->line($X1, $Y1 + $R, $X1, $Y2 - $R); // Left Vertical
+		$this->line($X1 + $R, $Y1, $X2 - $R, $Y1); // Lower Horizontal
+		$this->line($X1 + $R, $Y2, $X2 - $R, $Y2); // Top Horizontal
+		$this->line($X2, $Y1 + $R, $X2, $Y2 - $R); // Right Vertical
+
+		$C = $this->calculateRoundedCorner($X2, $Y2, $R, "TR");
+		$this->partEllipse($C[0], $C[1], $C[2], $C[3], $C[4]); // TR
+		$C = $this->calculateRoundedCorner($X1, $Y2, $R, "TL");
+		$this->partEllipse($C[0], $C[1], $C[2], $C[3], $C[4]); // TL
+		$C = $this->calculateRoundedCorner($X1, $Y1, $R, "BL");
+		$this->partEllipse($C[0], $C[1], $C[2], $C[3], $C[4]); // BL
+		$C = $this->calculateRoundedCorner($X2, $Y1, $R, "BR");
+		$this->partEllipse($C[0], $C[1], $C[2], $C[3], $C[4]); // BR
+	}
+
+	function topRoundedRectangle($X, $Y, $W, $H, $R)
+	{
+		$this->roundedRectangle($X, $Y, $W, $H, $R, "B");
+	}
+
+	function bottomRoundedRectangle($X, $Y, $W, $H, $R)
+	{
+		$this->roundedRectangle($X, $Y, $W, $H, $R, "T");
+	}
+
 
 /**
 * add a new page to the document
@@ -2662,8 +2784,8 @@ function PRVT_getBytes(&$data,$pos,$num){
 function addPngFromFile($file,$x,$y,$w=0,$h=0){
   // read in a png file, interpret it, then add to the system
   $error=0;
-  $tmp = get_magic_quotes_runtime();
-  set_magic_quotes_runtime(0);
+//$tmp = get_magic_quotes_runtime();
+//set_magic_quotes_runtime(0);
   $fp = @fopen($file,'rb');
   if ($fp){
     $data='';
@@ -2675,7 +2797,7 @@ function addPngFromFile($file,$x,$y,$w=0,$h=0){
     $error = 1;
     $errormsg = 'trouble opening file: '.$file;
   }
-  set_magic_quotes_runtime($tmp);
+//set_magic_quotes_runtime($tmp);
   
   if (!$error){
     $header = chr(137).chr(80).chr(78).chr(71).chr(13).chr(10).chr(26).chr(10);

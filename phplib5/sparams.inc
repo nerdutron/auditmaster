@@ -23,7 +23,7 @@ class sparams
 	function CreateHash()
 	{
 		$HASH = CreateUniqueKey(8);
-		$Query = "SELECT * FROM secure_parameters WHERE hash = '".$HASH."'";
+		$Query = "SELECT COUNT(*) FROM secure_parameters WHERE hash = '".$HASH."'";
 			if (DBGet(SPARAMS_DB, $Query))
 				return(sparams::CreateHash());
 		return($HASH);
@@ -52,6 +52,12 @@ class sparams
 		$Parameters = DBGet(SPARAMS_DB, $Query);
 		if (trim($Parameters))
 			return(unserialize($Parameters));
+	}
+
+	function GetField($HASH, $Field, $UserID = 0)
+	{
+		$Parameters = sparams::Get($HASH, $UserID);
+		return($Parameters[$Field]);
 	}
 
 	function Clean()
