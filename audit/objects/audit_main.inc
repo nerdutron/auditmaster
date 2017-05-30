@@ -73,9 +73,15 @@ class audit_main extends secure
 		echo "	});\n";
 */
 		echo '	$("#save_note").click(function(){'."\n";
-		echo "	$('#notes_display').load('".$this->URL("audit|save_notes", array("OperatorID" => $this->OperatorID))."', {'Note' : document.getElementById('NoteArea').value} );\n";
-		echo "  	document.getElementById('NoteArea').value = '';\n";
-		echo "	});\n";
+//		echo "	$('#notes_display').load('".$this->URL("audit|save_notes", array("OperatorID" => $this->OperatorID))."', {'Note' : document.getElementById('NoteArea').value} );\n";
+		echo "	$.ajax({url: '".$this->URL("audit|save_notes", array("OperatorID" => $this->OperatorID))."',\n"; 
+                echo "    data: {'Note' : $('#NoteArea').val()},\n";
+		echo "    success: function(result) {\n";
+		echo "		console.log(result);\n";
+		echo "		$('.notes_display').html(result);\n";
+		echo "  	$('#NoteArea').val('');\n";
+ 		echo "     }});\n";
+		echo "	});\n\n";
 		echo "	$('#dialog-form').dialog({\n";
 		echo "		autoOpen: false,\n";
 		echo "		height: 300,\n";
@@ -130,8 +136,23 @@ class audit_main extends secure
 		echo 'function LoadAudits() {'."\n";
 		echo "	var values = new Array();\n";
 		echo "	$(\"input[name='Scheme[]']:checked\").each(function(){values.push($(this).val());});\n";
-		echo "	$('#audit_display').load('".$this->URL("audit|add_audits", array("OperatorID" => $this->OperatorID))."', {'Schemes[]' : values}, function() { \n";
-		echo "	  $('#scheme_display').load('".$this->URL("audit|show_schemes", array("OperatorID" => $this->OperatorID))."'); } );\n";
+
+		echo "  $.ajax({url: '".$this->URL("audit|add_audits", array("OperatorID" => $this->OperatorID))."',\n";
+		echo "    data: {'Schemes[]' : values},\n";
+		echo "    success:  function(audit_result) { \n";
+		echo "	    $('.audit_display').html(audit_result);\n";
+		echo "      $.ajax({ url: '".$this->URL("audit|show_schemes", array("OperatorID" => $this->OperatorID))."',\n";
+		echo "        success: function(result) {\n";
+		echo "	  	$('.scheme_display').html(result);\n";
+		echo "        }\n";
+		echo "      })\n";
+		echo "    }\n";
+		echo "  })\n";
+
+
+
+//		echo "	$('#audit_display').load('".$this->URL("audit|add_audits", array("OperatorID" => $this->OperatorID))."', {'Schemes[]' : values}, function() { \n";
+//		echo "	  $('#scheme_display').load('".$this->URL("audit|show_schemes", array("OperatorID" => $this->OperatorID))."'); } );\n";
 		echo "	}\n";
 		echo "</script>\n";
 		echo "<script type='text/javascript'>\n";
