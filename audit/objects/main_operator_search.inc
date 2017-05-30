@@ -100,7 +100,7 @@ class main_operator_search extends secure
 		$T->AddData(field::GetDrop("FormData[active]", $this->FormData["active"], array("" => "", 1 => "Active", 0 => "Inactive")));
 
 		$T->AddHead("Setup By:");
-		$T->AddData(field::GetDrop("FormData[created_by]", $this->FormData["created_by"], tools::GetUsersDrop(true)), 3);
+		$T->AddData(field::GetDrop("FormData[setup_by]", $this->FormData["setup_by"], tools::GetUsersDrop(true)), 3);
 		$T->EndRow();
 
 		if ($this->User->NeedsAdmin(2))

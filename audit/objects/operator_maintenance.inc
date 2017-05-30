@@ -48,7 +48,7 @@ class operator_maintenance extends secure
 			if (!is_array($this->FormData))
 			{
 				$this->FormData = array();
-				$this->FormData["created_by"] = $this->User->UserID();
+				$this->FormData["setup_by"] = $this->User->UserID();
 			}
 		}
 
@@ -117,7 +117,7 @@ class operator_maintenance extends secure
 		$T->AddData(field::GetDrop("FormData[active]", $this->FormData["active"], array(1 => "Active", 0 => "Inactive")));
 
 		$T->AddHead("Setup By:");
-		$T->AddData(field::GetDrop("FormData[created_by]", $this->FormData["created_by"], tools::GetUsersDrop(true)), 3);
+		$T->AddData(field::GetDrop("FormData[setup_by]", $this->FormData["setup_by"], tools::GetUsersDrop(true)), 3);
 		$T->EndRow();
 
 		$T->AddHead("Physical Address", 6);
