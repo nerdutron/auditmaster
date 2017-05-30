@@ -69,9 +69,9 @@ class security extends ObjectSecurityOff
 
 	final function InitialiseSecurity()
 	{
-		$this->User = new user_security();
-		if ($this->GetV(SESSION_COOKIE))
-			$this->User->LoadFromCookie($this->GetV(SESSION_COOKIE));
+                $this->User = new user_security;
+                if ($this->GetCookie(SESSION_COOKIE))
+                        $this->User->LoadFromCookie($this->GetCookie(SESSION_COOKIE));
 
 		if (!$this->ValidUser())
 		{

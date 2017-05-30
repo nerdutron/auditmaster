@@ -49,9 +49,9 @@ define("PROCESS_DB", WEB_DB);
 define("PAGE_CACHE_DB", WEB_DB);
 
 // environment databases
-define("ACC_DB_NAME", "ATAG_DEV");
-define("ACC_DB_NAME", "AUDITMASTER");
-define("OLD_DB_NAME", "ATAG_LATEST");
+define("ACC_DB_NAME", "ATAGROUP_LIVE");
+//define("ACC_DB_NAME", "AUDITMASTER");
+//define("OLD_DB_NAME", "ATAG_LATEST");
 
 define("ACC_DB", "mysql://".$MY_USER.":".$MY_PASSWORD."@".DB_SERVER."/".ACC_DB_NAME);
 //define("DB", "mysql://".$MY_USER.":".$MY_PASSWORD."@".DB_SERVER."/AM_LIVE");

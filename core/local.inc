@@ -31,9 +31,9 @@ define("CONTAINER_PROJECT", "core");
 // require_once(PHPLIB_DIR."tools.inc");
 // DiskLogFile("core");
 // DiskLogRecord("ALL");
-define("SESSION_COOKIE", "SANCTUARY_SESSION");
-define("SESSION_EXPIRY", "+ 4 hours");
-define("COOKIE_NAME", "SANCTUARY_ACCESS");
+define("SESSION_COOKIE", "ATAG_SESSION");
+define("SESSION_EXPIRY", "+ 4hours");
+define("COOKIE_NAME", "ATAG_ACCESS");
 define("COOKIE_ENCRYPT", "1");
 define("PAGE_CACHE_KEY", COOKIE_NAME);
 
