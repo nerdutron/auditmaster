@@ -245,7 +245,7 @@ class report extends secure
 
 			$T->AddData($Row["scheme_name"]);
 			$T->AddData($Row["audit_status"]);
-			if ($Row["date_completed"])
+			if ($Row["date_completed"] && $Row["date_completed"] != "0000-00-00")
 				$T->AddData(date(DATE_FORMAT, strtotime($Row["date_completed"])));
 			else
 				$T->AddData("");

@@ -166,7 +166,7 @@ class tools
 		}
 
 		// Advance unless we are at the last record for this schedule
-		if (is_array($NextStage))
+		if (is_array($NextStage) && $NextStage["stage_id"])
 			return $NextStage;
 		else
 			return $CurrentStage;

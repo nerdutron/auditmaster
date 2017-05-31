@@ -127,7 +127,8 @@ class operator
 
 		$INQ->Save("operator_id", $this->OperatorID);
 		$INQ->Save("note", $Note);
-		$INQ->Add("FUNCTION", "note_date", "now()");
+		//$INQ->Add("FUNCTION", "note_date", "now()");
+		$INQ->Save("note_date", date("Y-m-d H:i:s"));
 		$INQ->Save("user_id", $UserID);
 
 		$INQ->Run(DB, "notes", "INSERT");

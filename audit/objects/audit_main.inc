@@ -74,6 +74,7 @@ class audit_main extends secure
 */
 		echo '	$("#save_note").click(function(){'."\n";
 //		echo "	$('#notes_display').load('".$this->URL("audit|save_notes", array("OperatorID" => $this->OperatorID))."', {'Note' : document.getElementById('NoteArea').value} );\n";
+		echo "  console.log($('#NoteArea').val());\n";
 		echo "	$.ajax({url: '".$this->URL("audit|save_notes", array("OperatorID" => $this->OperatorID))."',\n"; 
                 echo "    data: {'Note' : $('#NoteArea').val()},\n";
 		echo "    success: function(result) {\n";
@@ -166,8 +167,14 @@ class audit_main extends secure
 		echo "		modal: true,\n";
 		echo " 		buttons: {\n";
 		echo "		'Delete': function() {\n";
-		echo "		$('#audit_display').load('".$this->URL("audit|delete_audit", array("OperatorID" => $this->OperatorID))."', {'AuditID' : AuditID} );\n";
-		echo "			 $(this).dialog('close');\n";
+		echo "		  var dialog = $(this);\n";
+		echo "            $.ajax({url: '".$this->URL("audit|delete_audit", array("OperatorID" => $this->OperatorID))."',\n";
+		echo "		    data: {'AuditID' : AuditID},\n";
+		echo "		    success: function(result) {\n";
+		echo "			$('.audit_display').html(result)\n";
+		echo "			 dialog.dialog('close');\n";
+		echo "		    }});\n";
+//		echo "		$('#audit_display').load('".$this->URL("audit|delete_audit", array("OperatorID" => $this->OperatorID))."', {'AuditID' : AuditID} );\n";
 		echo "		 },\n";
 		echo "		Cancel: function() {\n";
 		echo "			$(this).dialog('close');\n";
