@@ -141,12 +141,12 @@ class audit_edit extends secure
 		$T->EndRow();
 
 		$T->AddHead("Auditor:");
-		if ($this->NeedsAdmin(2) || $this->Audit->Editable())
+		if ($this->NeedsAdmin(2) || $this->Audit->Editable() || $FormData["auditor_id"] == 0)
 			$T->AddData(field::GetDrop("FormData[auditor_id]", $FormData["auditor_id"], audit::GetAuditorDrop(array("" => ""))));
 		else
 		{
 			$AuditorArray = audit::GetAuditorDrop();
-			$T->AddData($AuditorArray[$FormData["auditor_id"]]);
+			$T->AddData($AuditorArray[$FormData["auditor_id"]].field::GetHidden("FormData[auditor_id]", $FormData["auditor_id"]));
 		}
 		$T->EndRow();
 		$T->AddHead("Stage:");
