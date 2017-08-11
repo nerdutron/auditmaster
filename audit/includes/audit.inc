@@ -189,6 +189,7 @@ class audit
 		$INQ->Save("user_id", $UserID);
 
 		$INQ->Run(DB, "notes", "INSERT");
+		$INQ->EndQuery();
 	}
 
 	function GetFiles($Limit)
@@ -203,7 +204,7 @@ class audit
 		$INQ->Save("file_name", $Data["file_name"]);
 		$INQ->Save("file_mime", $Data["file_mime"]);
 		$INQ->Save("file_size", sizeof($Data["file_data"]));
-		$INQ->Add("FUNCTION", "loaded", "now()");
+		$INQ->Save("loaded", date("Y-m-d H:i:s"));
 		$INQ->Save("description", $Data["description"]);
 		$INQ->Save("file_data", $Data["file_data"]);
 		$INQ->Save("operator_id", $Data["operator_id"]);

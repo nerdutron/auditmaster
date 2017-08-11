@@ -47,28 +47,47 @@ class audit_edit extends secure
 		echo '<script type="text/javascript" src="js/jquery.js"></script>'."\n";
 		tools::GetDatePopupJS("date_due");
 		tools::GetDatePopupJS("date_completed");
-		echo '<link href="css/uploadify.css" rel="stylesheet" type="text/css" />'."\n";
-		echo '<script type="text/javascript" src="js/swfobject.js"></script>'."\n";
-		echo '<script type="text/javascript" src="js/jquery.uploadify.v2.1.0.min.js"></script>';
+		echo '<link href="css/fileuploader.css" rel="stylesheet" type="text/css" />'."\n";
+		//echo '<script type="text/javascript" src="js/swfobject.js"></script>'."\n";
+		//echo '<script type="text/javascript" src="js/jquery.uploadify.v2.1.0.min.js"></script>';
+		//echo '<script type="text/javascript" src="js/jquery.uploadify.min.js"></script>';
+		echo '<script type="text/javascript" src="js/fileuploader.js"></script>';
 		echo "<script type='text/javascript'>\n";
+		echo "	function UpdateFileTable() {\n";
+		echo "		$.ajax({url: '".$this->URL("audit|file_table", array("OperatorID" => $this->OperatorID, "AuditID" => $this->AuditID))."',\n";
+		echo "			success: function(result) {\n";
+		echo "				$('.files_table').html(result);\n";
+		echo "			}\n"; 
+		echo "		});\n";
+		echo "	}\n";
 		echo "$(document).ready(function() {\n";
-		echo "    $('#uploadify').uploadify({\n";
-		echo "        'uploader'       : 'js/uploadify.swf',\n";
-		//echo "        'script'         : '".$this->URL("save_file")."',\n";
-		echo "        'script'         : 'uploadify.php',\n";
-		echo "        'scriptData'     : {'OperatorID':'".$this->OperatorID."','AuditID':'".$this->AuditID."'},\n";
-		echo "        'cancelImg'      : 'cancel.png',\n";
-		echo "        'folder'         : 'uploads',\n";
-		echo "        'queueID'        : 'fileQueue',\n";
-		echo "        'auto'           : true,\n";
-		echo "        'multi'          : true,\n";
-		echo "		  'onAllComplete'  : function(event, data) {\n";
-		echo "					$.ajax({url: '".$this->URL("audit|file_table", array("OperatorID" => $this->OperatorID, "AuditID" => $this->AuditID))."',\n";
-		echo "						success: function(result) {\n";
-		echo "							$('.files_table').html(result);\n";
-		echo "						}});\n";
-      		echo "				}\n";
-		echo "    });\n";
+		echo "var uploaderAttachments = new qq.FileUploader({
+			element: $('#file-uploader-attachments')[0],
+					action: '".$this->URL("audit|save_file")."',
+					params: {'OperatorID':'".$this->OperatorID."','AuditID':'".$this->AuditID."'},\n";
+		echo "	      		onComplete: function(id, fileName, xhr) {\n";
+		echo "  			UpdateFileTable();\n";
+      		echo "			}\n";
+
+		echo "});";
+//		echo "    $('#uploadify').uploadify({\n";
+//		echo "        'uploader'       : 'js/uploadify.swf',\n";
+//		//echo "        'script'         : '".$this->URL("save_file")."',\n";
+//		echo "        'script'         : 'uploadify.php',\n";
+//		echo "        'scriptData'     : {'OperatorID':'".$this->OperatorID."','AuditID':'".$this->AuditID."'},\n";
+//		echo "        'cancelImg'      : 'cancel.png',\n";
+//		echo "        'folder'         : 'uploads',\n";
+//		echo "        'queueID'        : 'fileQueue',\n";
+//		echo "        'auto'           : true,\n";
+//		echo "        'multi'          : true,\n";
+//		echo "	      'onAllComplete'  : function(event, data) {\n";
+//		echo "					$.ajax({url: '".$this->URL("audit|file_table", array("OperatorID" => $this->OperatorID, "AuditID" => $this->AuditID))."',\n";
+//		echo "						success: function(result) {\n";
+//		echo "							$('.files_table').html(result);\n";
+//		echo "						}\n"; 
+//		echo "					});\n";
+//      		echo "				}\n";
+//		echo "    });\n";
 		echo '	$("#save_note").click(function(){'."\n";
 		echo "	  $.ajax({url: '".$this->URL("audit|save_audit_notes", array("OperatorID" => $this->OperatorID, "AuditID" => $this->AuditID))."',\n";
 		echo "		data: {'Note' : document.getElementById('NoteArea').value},\n";
@@ -256,7 +275,8 @@ class audit_edit extends secure
 		$T->AddHead("<h3>Files</h3>");
 		$T->EndRow();
 
-		$T->AddData("<div id='fileQueue'></div><input type='file' name='uploadify' id='uploadify' /><p><a href=\"javascript:jQuery('#uploadify').uploadifyClearQueue()\">Cancel All Uploads</a></p>");
+		//$T->AddData("<div id='fileQueue'></div><input type='file' name='uploadifyer' id='uploadify' /><p><a href=\"javascript:jQuery('#uploadify').uploadifyClearQueue()\">Cancel All Uploads</a></p>");
+		$T->AddData("<div id='file-uploader-attachments'></div>");
 
 		$T->EndRow();
 

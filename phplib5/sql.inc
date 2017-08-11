@@ -16,7 +16,7 @@ class sql
 		return($Text);
 	}
 
-	function text($String)
+	static function text($String)
 	{
 		if (defined("SQL_FUNC_LOGIN"))
 			$User = SQL_FUNC_LOGIN;

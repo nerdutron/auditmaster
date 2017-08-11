@@ -11,6 +11,7 @@
 //                                                                          //
 //////////////////////////////////////////////////////////////////////////////
 
+date_default_timezone_set("Australia/Brisbane");
 error_reporting(E_ALL^E_NOTICE);
 require_once("definitions.inc");
 new main;
